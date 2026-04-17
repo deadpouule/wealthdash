@@ -61,25 +61,21 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-midnight font-sans selection:bg-neon-mint/30">
+    <div className="min-h-screen bg-[#0A0A0B] font-sans selection:bg-neon-mint/30 pb-[80px] md:pb-0">
       <Sidebar currentView={currentView} onNavigate={setCurrentView} />
       
-      <main className="pl-[72px] min-h-screen relative">
+      <main className="md:pl-[72px] min-h-screen relative flex flex-col items-center">
         <Header />
         
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="w-full max-w-7xl mx-auto px-0 md:px-4">
           <div className="animate-in fade-in duration-700">
             {renderView()}
           </div>
 
-          <footer className="px-10 py-12 border-t border-border-subtle flex flex-col md:flex-row justify-between items-center gap-6 mt-12 opacity-50">
-            <div className="flex items-center gap-6">
-              <span className="text-[10px] uppercase tracking-widest">© 2026 WealthDash Private</span>
-              <span className="text-[10px] uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Politique de Confidentialité</span>
-              <span className="text-[10px] uppercase tracking-widest cursor-pointer hover:text-white transition-colors">Conditions Générales</span>
-            </div>
-            <div className="text-[10px] uppercase tracking-widest">
-              Dernière Synchro: 16:11:39 GMT+1
+          <footer className="px-6 md:px-10 py-12 border-t border-[#1A1A1A] flex flex-col md:flex-row justify-between items-center gap-6 mt-6 opacity-30">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 text-center">
+              <span className="text-[10px] uppercase tracking-widest text-space-gray">© 2026 WealthDash</span>
+              <span className="text-[10px] uppercase tracking-widest text-space-gray cursor-pointer hover:text-white transition-colors">Politique de Confidentialité</span>
             </div>
           </footer>
         </div>
