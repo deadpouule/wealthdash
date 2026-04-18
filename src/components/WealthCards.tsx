@@ -1,56 +1,59 @@
 import { Building2, Landmark, Cpu, Gem, CircleDollarSign, PiggyBank } from 'lucide-react';
 import { ViewType } from './Sidebar';
-
-const assets = [
-  {
-    title: 'Immobilier',
-    value: '750.000 MAD',
-    change: 'Max 40%',
-    icon: Building2,
-    label: 'Emprunt'
-  },
-  {
-    title: 'Bourse',
-    value: '28.750 MAD',
-    change: '+4.2%',
-    icon: CircleDollarSign,
-    label: 'OPCVM'
-  },
-  {
-    title: 'Crypto',
-    value: '12.000 MAD',
-    change: '+12.1%',
-    icon: Cpu,
-    label: 'Digital Assets'
-  },
-  {
-    title: 'Cash',
-    value: '25.000 MAD',
-    change: '0.0%',
-    icon: Landmark,
-    label: 'Liquidités'
-  },
-  {
-    title: 'Or & Métaux',
-    value: '0 MAD',
-    change: '0.0%',
-    icon: Gem,
-    label: 'Commodities'
-  },
-  {
-    title: 'Épargne',
-    value: '110.000 MAD',
-    change: '+2.4%',
-    icon: PiggyBank,
-    label: 'Fonds de Réserve'
-  }
-];
+import { useWealthStore } from '../store/useWealthStore';
 
 interface WealthCardsProps {
   onNavigate?: (view: ViewType) => void;
 }
 
 export default function WealthCards({ onNavigate }: WealthCardsProps) {
+  const particuliers = useWealthStore((state) => state.particulier);
+
+  const assets = [
+    {
+      title: 'Immobilier',
+      value: particuliers.immobilier,
+      change: 'Max 40%',
+      icon: Building2,
+      label: 'Emprunt'
+    },
+    {
+      title: 'Bourse',
+      value: particuliers.bourse,
+      change: '+4.2%',
+      icon: CircleDollarSign,
+      label: 'OPCVM'
+    },
+    {
+      title: 'Crypto',
+      value: particuliers.crypto,
+      change: '+12.1%',
+      icon: Cpu,
+      label: 'Digital Assets'
+    },
+    {
+      title: 'Cash',
+      value: particuliers.cash,
+      change: '0.0%',
+      icon: Landmark,
+      label: 'Liquidités'
+    },
+    {
+      title: 'Or & Métaux',
+      value: particuliers.or,
+      change: '0.0%',
+      icon: Gem,
+      label: 'Commodities'
+    },
+    {
+      title: 'Épargne',
+      value: particuliers.epargne,
+      change: '+2.4%',
+      icon: PiggyBank,
+      label: 'Fonds de Réserve'
+    }
+  ];
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 px-4 md:px-10">
       {assets.map((asset) => {
@@ -76,7 +79,7 @@ export default function WealthCards({ onNavigate }: WealthCardsProps) {
                 {asset.title}
               </p>
               <h3 className="text-sm md:text-xl font-normal text-white tracking-tight">
-                {asset.value}
+                {Number(asset.value).toLocaleString('fr-FR')} MAD
               </h3>
             </div>
           </div>

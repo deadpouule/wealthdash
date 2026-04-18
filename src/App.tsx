@@ -15,27 +15,76 @@ import ImmobilierView from './views/ImmobilierView';
 import CashEpargneView from './views/CashEpargneView';
 import BourseView from './views/BourseView';
 import OnboardingView from './views/OnboardingView';
+import BusinessOnboardingView from './views/BusinessOnboardingView';
+import SaisieFacturesView from './views/SaisieFacturesView';
+import GestionRHView from './views/GestionRHView';
+import GenericDetailView from './views/GenericDetailView';
+import FiscaliteProView from './views/FiscaliteProView';
+import { useWealthStore } from './store/useWealthStore';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  
+  const mode = useWealthStore(state => state.mode);
 
-  // Auto-completed onboarding removed to allow new user flow
   useEffect(() => {
-    localStorage.removeItem('onboarded');
-    setShowOnboarding(true);
-  }, []);
+    // Check if user has already onboarded for the current mode
+    const hasOnboardedParticulier = localStorage.getItem('onboarded') === 'true';
+    const hasOnboardedBusiness = localStorage.getItem('onboarded_business') === 'true';
+    
+    if (mode === 'Particulier' && !hasOnboardedParticulier) {
+      setShowOnboarding(true);
+    } else if (mode === 'Business' && !hasOnboardedBusiness) {
+      setShowOnboarding(true);
+    } else {
+      setShowOnboarding(false);
+    }
+  }, [mode]);
 
   const handleOnboardingComplete = (data: any) => {
-    localStorage.setItem('onboarded', 'true');
-    localStorage.setItem('userIncome', JSON.stringify(data.income));
+    if (mode === 'Particulier') {
+      localStorage.setItem('onboarded', 'true');
+      const cryptoTotal = data.crypto.reduce((acc: number, c: any) => acc + Number(c.value || 0), 0);
+      const immobilierTotal = data.immobilier.reduce((acc: number, c: any) => acc + Number(c.value || 0), 0);
+      const bourseTotal = data.bourse.reduce((acc: number, c: any) => acc + (Number(c.price || 0) * Number(c.qty || 1)), 0);
+      
+      const newAssets: any[] = [];
+      data.crypto.forEach((c: any) => newAssets.push({ id: Math.random().toString(), category: 'Crypto', name: c.label, value: Number(c.value) }));
+      data.immobilier.forEach((c: any) => newAssets.push({ id: Math.random().toString(), category: 'Immobilier', name: c.name, value: Number(c.value) }));
+      data.bourse.forEach((c: any) => newAssets.push({ id: Math.random().toString(), category: 'Bourse', name: c.label, value: (Number(c.price || 0) * Number(c.qty || 1)) }));
+
+      useWealthStore.getState().updateParticulier({
+        revenuMensuel: Number(data.income || 0),
+        cash: Number(data.cash || 0),
+        epargne: Number(data.savings || 0),
+        crypto: cryptoTotal,
+        immobilier: immobilierTotal,
+        bourse: bourseTotal,
+        listeActifs: newAssets
+      });
+    } else {
+      localStorage.setItem('onboarded_business', 'true');
+      const expenses = data.expenses || {};
+      const totalOut = Number(expenses.payroll||0) + Number(expenses.rent||0) + Number(expenses.software||0) + Number(expenses.other||0);
+      
+      useWealthStore.getState().updateBusiness({
+        tresorerie: Number(data.cash || 0),
+        chiffreAffairesHT: Number(data.monthlyCA || 0) * 12, // CA is often annualized for taxes
+        fluxIn: Number(data.monthlyCA || 0),
+        fluxOut: totalOut,
+        stock: 0,
+        dettes: 0,
+        resultatComptable: (Number(data.monthlyCA || 0) - totalOut) * 12 // Simulated RC
+      });
+    }
     setShowOnboarding(false);
   };
 
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
-        return <DashboardView onNavigate={setCurrentView} />;
+        return <DashboardView onNavigate={setCurrentView} mode={mode} />;
       case 'cashflow':
         return <CashflowView />;
       case 'taxes':
@@ -50,19 +99,39 @@ export default function App() {
         return <CashEpargneView onNavigate={setCurrentView} />;
       case 'bourse':
         return <BourseView onNavigate={setCurrentView} />;
+      case 'factures':
+        return <SaisieFacturesView onNavigate={setCurrentView} />;
+      case 'rh':
+        return <GestionRHView onNavigate={setCurrentView} />;
+      case 'fiscalite':
+      case 'business-fiscal':
+        return <FiscaliteProView onNavigate={setCurrentView} />;
+      case 'business-tresorerie':
+        return <GenericDetailView title="Détails Trésorerie (Pro)" onNavigate={setCurrentView} actionLabel="Ajouter un Compte" />;
+      case 'business-flux':
+        return <GenericDetailView title="Détails Flux" onNavigate={setCurrentView} actionLabel="Catégoriser Transaction" />;
+      case 'business-stock':
+        return <GenericDetailView title="Stock & Matériel" onNavigate={setCurrentView} actionLabel="Ajouter Matériel" />;
+      case 'business-rh':
+        return <GenericDetailView title="Détails Salaires & RH" onNavigate={setCurrentView} actionLabel="Modifier Paie" />;
+      case 'business-dettes':
+        return <GenericDetailView title="Détails Dettes & Crédits" onNavigate={setCurrentView} actionLabel="Ajouter Emprunt" />;
       default:
         // By default or for investments (if stub)
-        return <DashboardView onNavigate={setCurrentView} />;
+        return <DashboardView onNavigate={setCurrentView} mode={mode} />;
     }
   };
 
   if (showOnboarding) {
+    if (mode === 'Business') {
+      return <BusinessOnboardingView onComplete={handleOnboardingComplete} />;
+    }
     return <OnboardingView onComplete={handleOnboardingComplete} />;
   }
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] font-sans selection:bg-neon-mint/30 pb-[80px] md:pb-0">
-      <Sidebar currentView={currentView} onNavigate={setCurrentView} />
+      <Sidebar currentView={currentView} onNavigate={setCurrentView} mode={mode} />
       
       <main className="md:pl-[72px] min-h-screen relative flex flex-col items-center">
         <Header />

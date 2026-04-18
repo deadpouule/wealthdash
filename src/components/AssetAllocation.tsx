@@ -1,15 +1,26 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-
-const data = [
-  { name: 'Immobilier', value: 45, color: '#E27D60' }, // Deep Terracotta
-  { name: 'Bourse', value: 25, color: '#41B3A3' },     // Finance Blue
-  { name: 'Épargne', value: 15, color: '#9D1424' },    // Space Cherry
-  { name: 'Crypto', value: 8, color: '#9B5DE5' },      // Amethyst Purple
-  { name: 'Cash', value: 5, color: '#34C759' },        // Emerald Green
-  { name: 'Or', value: 2, color: '#D4AF37' }           // Champagne Gold
-];
+import { useWealthStore } from '../store/useWealthStore';
 
 export default function AssetAllocation() {
+  const particuliers = useWealthStore((state) => state.particulier);
+
+  const data = [
+    { name: 'Immobilier', value: particuliers.immobilier, color: '#E27D60' }, // Deep Terracotta
+    { name: 'Bourse', value: particuliers.bourse, color: '#41B3A3' },     // Finance Blue
+    { name: 'Épargne', value: particuliers.epargne, color: '#9D1424' },    // Space Cherry
+    { name: 'Crypto', value: particuliers.crypto, color: '#9B5DE5' },      // Amethyst Purple
+    { name: 'Cash', value: particuliers.cash, color: '#34C759' },        // Emerald Green
+    { name: 'Or', value: particuliers.or, color: '#D4AF37' }           // Champagne Gold
+  ].filter(d => d.value > 0);
+  
+  const total = data.reduce((a, b) => a + b.value, 0);
+  
+  // Convert strictly to percentages relative to total
+  const chartData = data.map(d => ({
+    ...d,
+    percentage: total > 0 ? Math.round((d.value / total) * 100) : 0
+  }));
+
   return (
     <div className="px-4 md:px-10 mt-10 mb-6 flex w-full justify-center">
       <div className="bg-white/[0.03] backdrop-blur-[20px] border border-[#1A1A1A] rounded-[24px] p-10 md:p-16 flex flex-col md:flex-row items-center justify-center gap-16 md:gap-32 w-full max-w-5xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.8)]">
@@ -24,7 +35,7 @@ export default function AssetAllocation() {
                 </filter>
               </defs>
               <Pie
-                data={data}
+                data={chartData}
                 cx="50%"
                 cy="50%"
                 innerRadius="82%"
@@ -37,7 +48,7 @@ export default function AssetAllocation() {
                 animationEasing="ease-out"
                 filter="url(#subtle-shadow)"
               >
-                {data.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={entry.color} 
@@ -51,13 +62,13 @@ export default function AssetAllocation() {
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] md:text-xs text-space-gray uppercase tracking-[0.2em] font-bold mb-2">Net Worth</span>
-            <span className="text-2xl md:text-3xl text-white font-medium tracking-tight">12 400 000 MAD</span>
+            <span className="text-2xl md:text-3xl text-white font-medium tracking-tight whitespace-nowrap">{Number(total).toLocaleString('fr-FR')} MAD</span>
           </div>
         </div>
 
         {/* Legend */}
         <div className="flex flex-col gap-5 w-full md:w-auto min-w-[220px]">
-          {data.map((item, i) => (
+          {chartData.map((item, i) => (
             <div key={i} className="flex items-center justify-between border-b border-[#1A1A1A] pb-3 last:border-b-0 last:pb-0">
               <div className="flex items-center gap-4">
                 <span 
@@ -68,7 +79,7 @@ export default function AssetAllocation() {
                   }} 
                 />
                 <span className="text-white/90 text-sm md:text-base tracking-wide font-light">
-                  {item.name} <span className="text-space-gray mx-1">&bull;</span> {item.value}%
+                  {item.name} <span className="text-space-gray mx-1">&bull;</span> {item.percentage}%
                 </span>
               </div>
             </div>

@@ -4,12 +4,13 @@ import { TrendingUp } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import { cn } from '../lib/utils';
 
-export default function Hero() {
+export default function Hero({ title = "Valeur Nette Totale", initialValue = 2842150 }: { title?: string, initialValue?: number }) {
   const [period, setPeriod] = useState<'3m'|'6m'|'1an'|'Tout'>('1an');
-  const [netWorth, setNetWorth] = useState(2842150);
+  const [netWorth, setNetWorth] = useState(initialValue);
 
   // Read individual user data if available from onboarding
   useEffect(() => {
+    setNetWorth(initialValue); // Sync prop to state if it changes
     const income = localStorage.getItem('userIncome');
     if (income) {
       // Simulate an individual net worth based on their income profile if they just onboarded
@@ -49,7 +50,7 @@ export default function Hero() {
 
   return (
     <section className="flex flex-col items-center justify-center py-6 px-6 w-full max-w-4xl mx-auto">
-      <span className="text-[12px] text-space-gray uppercase tracking-[2px] mb-2 font-light">Valeur Nette Totale</span>
+      <span className="text-[12px] text-space-gray uppercase tracking-[2px] mb-2 font-light">{title}</span>
       <h2 className="text-5xl md:text-[64px] font-extralight tracking-tighter text-white mb-3">
         {netWorth.toLocaleString('fr-FR').replace(/\s/g, '.')} MAD
       </h2>
