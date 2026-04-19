@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useWealthStore } from '../store/useWealthStore';
-import { ArrowLeft, Users, Plus, Calculator, FileCheck } from 'lucide-react';
+import { ArrowLeft, Users, Plus, Calculator, FileCheck, Pencil, Trash2 } from 'lucide-react';
 import { ViewType } from '../components/Sidebar';
 import { WealthEngine } from '../lib/WealthEngine';
 
@@ -43,6 +43,20 @@ export default function GestionRHView({ onNavigate }: Props) {
   };
 
   const totalCost = employes.reduce((acc, current) => acc + current.costGlobal, 0);
+
+  const handleDelete = (id: string) => {
+    const emp = employes.find(e => e.id === id);
+    if (!emp) return;
+    updateBusiness({
+      employes: employes.filter(e => e.id !== id),
+      fluxOut: business.fluxOut - emp.costGlobal,
+      resultatComptable: business.resultatComptable + (emp.costGlobal * 12)
+    });
+  };
+
+  const handleEdit = (id: string) => {
+    console.log("Trigger edit employe for id:", id);
+  };
 
   return (
     <div className="space-y-12 animate-in fade-in duration-1000 px-6 md:px-10 pt-8 pb-20 w-full max-w-6xl mx-auto">
@@ -106,9 +120,9 @@ export default function GestionRHView({ onNavigate }: Props) {
                </div>
              ) : (
                employes.map((emp) => (
-                 <div key={emp.id} className="bg-white/[0.02] border border-[#1A1A1A] rounded-[16px] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                   <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80">
+                 <div key={emp.id} className="bg-white/[0.02] border border-[#1A1A1A] rounded-[16px] p-5 flex flex-col md:flex-row md:items-center gap-4">
+                   <div className="flex items-center gap-4 flex-1">
+                     <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 shrink-0">
                         <Users size={16} />
                      </div>
                      <div>
@@ -116,11 +130,19 @@ export default function GestionRHView({ onNavigate }: Props) {
                        <p className="text-space-gray text-xs mt-0.5">Base cible : {Number(emp.salaryNet).toLocaleString()} MAD NET</p>
                      </div>
                    </div>
-                   <div className="bg-neutral-900 px-4 py-2 rounded-lg border border-[#1A1A1A] text-right">
+                   <div className="bg-neutral-900 px-4 py-2 rounded-lg border border-[#1A1A1A] text-right shrink-0">
                      <p className="text-[10px] text-space-gray uppercase tracking-widest mb-1">Coût Réel Employeur</p>
                      <p className="font-semibold md:text-lg text-white">
                        {Number(emp.costGlobal.toFixed(0)).toLocaleString('fr-FR')} MAD
                      </p>
+                   </div>
+                   <div className="flex items-center justify-end gap-3 shrink-0 ml-2">
+                     <button onClick={() => handleEdit(emp.id)} className="text-space-gray hover:text-neon-mint transition-colors">
+                       <Pencil size={18} strokeWidth={1.5} />
+                     </button>
+                     <button onClick={() => handleDelete(emp.id)} className="text-space-gray hover:text-red-500 transition-colors">
+                       <Trash2 size={18} strokeWidth={1.5} />
+                     </button>
                    </div>
                  </div>
                ))

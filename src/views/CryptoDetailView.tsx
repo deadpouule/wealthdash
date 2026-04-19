@@ -1,7 +1,23 @@
-import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 import { ViewType } from '../components/Sidebar';
 
+const initialCryptos = [
+  { id: '1', name: 'Bitcoin', symbol: 'BTC', qty: 0.012, valueMAD: 9000, change: '+4.2%' },
+  { id: '2', name: 'Ethereum', symbol: 'ETH', qty: 0.038, valueMAD: 1200, change: '+1.5%' },
+  { id: '3', name: 'HYPE', symbol: 'HYPE', qty: 500.00, valueMAD: 1800, change: '+12.4%' }
+];
+
 export default function CryptoDetailView({ onNavigate }: { onNavigate: (v: ViewType) => void }) {
+  const [cryptos, setCryptos] = useState(initialCryptos);
+
+  const handleEdit = (id: string) => {
+    console.log("Edit crypto:", id);
+  };
+
+  const handleDelete = (id: string) => {
+    setCryptos(c => c.filter(item => item.id !== id));
+  };
   return (
     <div className="space-y-12 animate-in fade-in duration-1000 px-10 pt-8 pb-20">
       {/* Header */}
@@ -36,53 +52,32 @@ export default function CryptoDetailView({ onNavigate }: { onNavigate: (v: ViewT
 
       {/* List View */}
       <div className="max-w-4xl mx-auto space-y-4">
-         <div className="glass-card p-6 flex justify-between items-center rounded-2xl group hover:border-white/20 transition-all cursor-default">
-            <div className="flex items-center gap-6">
-              <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/50 group-hover:text-neon-mint transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M9 10h6"/><path d="M9 14h6"/></svg>
-              </div>
-              <div>
-                <p className="text-lg text-white font-medium">Bitcoin (BTC)</p>
-                <p className="text-xs text-space-gray">0.012 BTC</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-lg text-white font-medium">9.000 MAD</p>
-              <p className="text-xs text-neon-mint font-bold tracking-widest">+4.2%</p>
-            </div>
-         </div>
-
-         <div className="glass-card p-6 flex justify-between items-center rounded-2xl group hover:border-white/20 transition-all cursor-default">
-            <div className="flex items-center gap-6">
-              <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/50 group-hover:text-white transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>
-              </div>
-              <div>
-                <p className="text-lg text-white font-medium">Ethereum (ETH)</p>
-                <p className="text-xs text-space-gray">0.038 ETH</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-lg text-white font-medium">1.200 MAD</p>
-              <p className="text-xs text-neon-mint font-bold tracking-widest">+1.5%</p>
-            </div>
-         </div>
-
-         <div className="glass-card p-6 flex justify-between items-center rounded-2xl group hover:border-white/20 transition-all cursor-default">
-            <div className="flex items-center gap-6">
-              <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/50 group-hover:text-white transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              </div>
-              <div>
-                <p className="text-lg text-white font-medium">HYPE (HYPE)</p>
-                <p className="text-xs text-space-gray">500.00 HYPE</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-lg text-white font-medium">1.800 MAD</p>
-              <p className="text-xs text-neon-mint font-bold tracking-widest">+12.4%</p>
-            </div>
-         </div>
+        {cryptos.map(crypto => (
+          <div key={crypto.id} className="bg-white/[0.03] p-6 flex justify-between items-center rounded-[16px] group transition-all border border-[#1A1A1A] hover:bg-white/[0.04]">
+             <div className="flex items-center gap-6">
+               <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-white/50 group-hover:text-neon-mint transition-colors">
+                 {/* Simplified icon logic for example */}
+                 <div className="w-4 h-4 bg-white/20 rounded-full" />
+               </div>
+               <div>
+                 <p className="text-lg text-white font-medium">{crypto.name} ({crypto.symbol})</p>
+                 <p className="text-xs text-space-gray">{crypto.qty} {crypto.symbol}</p>
+               </div>
+             </div>
+             <div className="text-right flex-1 pr-6 border-r border-[#1A1A1A] mr-6">
+               <p className="text-lg text-white font-medium">{crypto.valueMAD.toLocaleString('fr-FR')} MAD</p>
+               <p className="text-xs text-neon-mint font-bold tracking-widest">{crypto.change}</p>
+             </div>
+             <div className="flex items-center gap-3 shrink-0">
+               <button onClick={() => handleEdit(crypto.id)} className="text-space-gray hover:text-neon-mint transition-colors">
+                 <Pencil size={18} strokeWidth={1.5} />
+               </button>
+               <button onClick={() => handleDelete(crypto.id)} className="text-space-gray hover:text-red-500 transition-colors">
+                 <Trash2 size={18} strokeWidth={1.5} />
+               </button>
+             </div>
+          </div>
+        ))}
       </div>
 
       {/* Action Button */}

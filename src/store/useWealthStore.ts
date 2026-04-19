@@ -61,14 +61,23 @@ export const useWealthStore = create<WealthState>((set) => ({
   },
 
   business: {
-    tresorerie: 840000,
+    tresorerie: 780000,
     fluxIn: 124000,
-    fluxOut: 85000,
+    fluxOut: 145000,
     stock: 1200000,
     dettes: 320000,
-    resultatComptable: 850000,
+    resultatComptable: 800000,
     chiffreAffairesHT: 1500000,
-    factures: [],
+    factures: [
+      {
+        id: 'f-1',
+        type: 'OUT',
+        amountHT: 50000,
+        tva: 10000,
+        date: new Date().toLocaleDateString('fr-FR'),
+        client: 'Matériel Informatique (Apple, Dell)'
+      }
+    ],
     employes: []
   },
 

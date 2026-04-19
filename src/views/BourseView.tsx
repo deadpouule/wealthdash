@@ -1,8 +1,10 @@
-import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, TrendingUp, TrendingDown, Pencil, Trash2 } from 'lucide-react';
 import { ViewType } from '../components/Sidebar';
 
-const holdings = [
+const initialHoldings = [
   {
+    id: '1',
     label: "Maroc Telecom (IAM)",
     qty: 100,
     price: 95.50,
@@ -11,6 +13,7 @@ const holdings = [
     points: "M0,25 C20,20 40,30 60,15 S80,20 100,5"
   },
   {
+    id: '2',
     label: "Attijariwafa Bank",
     qty: 40,
     price: 480.00,
@@ -21,7 +24,17 @@ const holdings = [
 ];
 
 export default function BourseView({ onNavigate }: { onNavigate: (v: ViewType) => void }) {
+  const [holdings, setHoldings] = useState(initialHoldings);
+
   const totalValue = holdings.reduce((acc, curr) => acc + (curr.qty * curr.price), 0);
+
+  const handleEdit = (id: string) => {
+    console.log("Edit holding:", id);
+  };
+
+  const handleDelete = (id: string) => {
+    setHoldings(h => h.filter(item => item.id !== id));
+  };
 
   return (
     <div className="space-y-12 animate-in fade-in duration-1000 px-10 pt-8 pb-20">
@@ -58,10 +71,10 @@ export default function BourseView({ onNavigate }: { onNavigate: (v: ViewType) =
 
           {/* Table Body */}
           <div className="flex flex-col">
-            {holdings.map((holding, idx) => (
+            {holdings.map((holding) => (
               <div 
-                key={idx} 
-                className="grid grid-cols-5 gap-4 px-8 py-6 items-center border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors"
+                key={holding.id} 
+                className="grid grid-cols-5 gap-4 px-8 py-6 items-center border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors relative"
               >
                 <div className="col-span-2 flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full border border-white/5 bg-white/5 flex items-center justify-center text-white/80">
@@ -81,7 +94,7 @@ export default function BourseView({ onNavigate }: { onNavigate: (v: ViewType) =
                   {holding.price.toFixed(2)}
                 </div>
 
-                <div className="text-right flex items-center justify-end gap-6">
+                <div className="text-right flex items-center justify-end gap-6 flex-1 pr-16">
                   {/* Sparkline */}
                   <div className="hidden lg:block w-16">
                     <svg viewBox="0 0 100 30" className={`w-full h-8 fill-none ${holding.isPositive ? 'stroke-neon-mint drop-shadow-[0_0_8px_rgba(52,199,89,0.4)]' : 'stroke-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]'}`}>
@@ -93,6 +106,16 @@ export default function BourseView({ onNavigate }: { onNavigate: (v: ViewType) =
                     {holding.isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                     <span className="text-sm tracking-wide">{holding.change}</span>
                   </div>
+                </div>
+                
+                {/* Actions */}
+                <div className="absolute right-8 flex items-center gap-3">
+                    <button onClick={() => handleEdit(holding.id)} className="text-space-gray hover:text-neon-mint transition-colors">
+                      <Pencil size={18} strokeWidth={1.5} />
+                    </button>
+                    <button onClick={() => handleDelete(holding.id)} className="text-space-gray hover:text-red-500 transition-colors">
+                      <Trash2 size={18} strokeWidth={1.5} />
+                    </button>
                 </div>
               </div>
             ))}

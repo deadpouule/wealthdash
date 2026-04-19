@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useWealthStore } from '../store/useWealthStore';
-import { ArrowLeft, Plus, ScanLine, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, ScanLine, FileText, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
 import { ViewType } from '../components/Sidebar';
 import { WealthEngine } from '../lib/WealthEngine';
 import { GoogleGenAI, Type } from '@google/genai';
@@ -148,6 +148,29 @@ Provide:
     fileInputRef.current?.click();
   };
 
+  const handleDelete = (id: string) => {
+    const fact = facts.find(f => f.id === id);
+    if (!fact) return;
+    
+    const impact = fact.type === 'IN' ? fact.amountHT + fact.tva : -(fact.amountHT + fact.tva);
+    const newCA = fact.type === 'IN' ? business.chiffreAffairesHT - fact.amountHT : business.chiffreAffairesHT;
+    const newRes = fact.type === 'IN' ? business.resultatComptable - fact.amountHT : business.resultatComptable + fact.amountHT;
+
+    updateBusiness({
+      factures: facts.filter(f => f.id !== id),
+      tresorerie: business.tresorerie - impact,
+      chiffreAffairesHT: newCA,
+      resultatComptable: newRes,
+      fluxIn: fact.type === 'IN' ? business.fluxIn - impact : business.fluxIn,
+      fluxOut: fact.type === 'OUT' ? business.fluxOut - Math.abs(impact) : business.fluxOut
+    });
+  };
+
+  const handleEdit = (id: string) => {
+    // Mode Édition logic stub prepared for Zustand communication
+    console.log("Trigger edit facture for id:", id);
+  };
+
   const tvaCollectee = facts.filter(f => f.type === 'IN').reduce((acc, f) => acc + f.tva, 0);
   const tvaDeductible = facts.filter(f => f.type === 'OUT').reduce((acc, f) => acc + f.tva, 0);
   const tvaEstimee = tvaCollectee - tvaDeductible;
@@ -255,9 +278,9 @@ Provide:
                </div>
              ) : (
                [...facts].reverse().map((f) => (
-                 <div key={f.id} className="bg-white/[0.02] border border-[#1A1A1A] rounded-[16px] p-5 flex items-center justify-between">
-                   <div className="flex items-center gap-4">
-                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${f.type === 'IN' ? 'bg-neon-mint/10 text-neon-mint' : 'bg-red-500/10 text-red-500'}`}>
+                 <div key={f.id} className="bg-white/[0.02] border border-[#1A1A1A] rounded-[16px] p-5 flex items-center gap-4">
+                   <div className="flex items-center gap-4 flex-1">
+                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${f.type === 'IN' ? 'bg-neon-mint/10 text-neon-mint' : 'bg-red-500/10 text-red-500'}`}>
                         {f.type === 'IN' ? <Plus size={16} /> : <span className="text-lg leading-none mb-1">-</span>}
                      </div>
                      <div>
@@ -265,11 +288,19 @@ Provide:
                        <p className="text-space-gray text-xs mt-0.5">{f.date} &bull; TVA : {f.tva.toLocaleString()} MAD</p>
                      </div>
                    </div>
-                   <div className="text-right">
+                   <div className="text-right shrink-0">
                      <p className={`font-semibold md:text-lg ${f.type === 'IN' ? 'text-neon-mint' : 'text-white'}`}>
                        {f.type === 'IN' ? '+' : '-'}{(f.amountHT + f.tva).toLocaleString('fr-FR')} MAD
                      </p>
                      <p className="text-space-gray text-xs mt-0.5">TTC</p>
+                   </div>
+                   <div className="flex items-center gap-3 ml-4 shrink-0 transition-opacity">
+                     <button onClick={() => handleEdit(f.id)} className="text-space-gray hover:text-neon-mint transition-colors">
+                       <Pencil size={18} strokeWidth={1.5} />
+                     </button>
+                     <button onClick={() => handleDelete(f.id)} className="text-space-gray hover:text-red-500 transition-colors">
+                       <Trash2 size={18} strokeWidth={1.5} />
+                     </button>
                    </div>
                  </div>
                ))

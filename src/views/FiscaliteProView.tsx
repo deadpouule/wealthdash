@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { ArrowLeft, Car, Package, Users, TrendingUp } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ArrowLeft, Car, Package, Users, TrendingUp, Pencil, Trash2 } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, YAxis } from 'recharts';
 import { ViewType } from '../components/Sidebar';
 import { useWealthStore } from '../store/useWealthStore';
@@ -9,8 +9,23 @@ interface Props {
   onNavigate: (v: ViewType) => void;
 }
 
+const initialOptimisations = [
+  { id: '1', title: 'LOA / Leasing', desc: 'Passer le véhicule de société en LOA', gain: 25000, icon: Car },
+  { id: '2', title: 'Matériel Pro', desc: 'Investir dans de nouvelles machines', gain: 40000, icon: Package },
+  { id: '3', title: 'Primes', desc: 'Verser une prime exceptionnelle', gain: 12000, icon: Users },
+];
+
 export default function FiscaliteProView({ onNavigate }: Props) {
   const business = useWealthStore(state => state.business);
+  const [optimisations, setOptimisations] = useState(initialOptimisations);
+
+  const handleEdit = (id: string) => {
+    console.log("Trigger edit optimisation:", id);
+  };
+
+  const handleDelete = (id: string) => {
+    setOptimisations(opts => opts.filter(o => o.id !== id));
+  };
   
   // Real calculations based on Moroccan law script
   const IS = WealthEngine.calculateIS(business.resultatComptable);
@@ -138,56 +153,34 @@ export default function FiscaliteProView({ onNavigate }: Props) {
 
           <div className="flex flex-col gap-4">
             
-            {/* Opti 1 */}
-            <div className="flex items-start md:items-center justify-between gap-4 p-4 rounded-[16px] hover:bg-white/[0.02] border border-transparent hover:border-[#1A1A1A] transition-all cursor-pointer group">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-space-gray group-hover:text-neon-mint transition-colors shrink-0">
-                  <Car size={16} strokeWidth={1.5} />
+            {optimisations.map((opt) => {
+              const IconComp = opt.icon;
+              return (
+                <div key={opt.id} className="flex items-start md:items-center gap-4 p-4 rounded-[16px] bg-white/[0.01] hover:bg-white/[0.02] border border-[#1A1A1A] transition-all group">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-space-gray group-hover:text-neon-mint transition-colors shrink-0">
+                      <IconComp size={16} strokeWidth={1.5} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase text-neon-mint tracking-wider font-bold mb-1">{opt.title}</span>
+                      <span className="text-white/80 font-light text-[14px]">{opt.desc}</span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] uppercase text-space-gray tracking-widest block mb-1">Gain IS</span>
+                    <span className="text-neon-mint font-medium whitespace-nowrap">-{opt.gain.toLocaleString('fr-FR')} MAD</span>
+                  </div>
+                  <div className="flex items-center gap-3 ml-2 shrink-0">
+                    <button onClick={() => handleEdit(opt.id)} className="text-space-gray hover:text-neon-mint transition-colors">
+                      <Pencil size={18} strokeWidth={1.5} />
+                    </button>
+                    <button onClick={() => handleDelete(opt.id)} className="text-space-gray hover:text-red-500 transition-colors">
+                      <Trash2 size={18} strokeWidth={1.5} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase text-neon-mint tracking-wider font-bold mb-1">LOA / Leasing</span>
-                  <span className="text-white/80 font-light text-[14px]">Passer le véhicule de société en LOA</span>
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="text-[10px] uppercase text-space-gray tracking-widest block mb-1">Gain IS</span>
-                <span className="text-neon-mint font-medium whitespace-nowrap">-25.000 MAD</span>
-              </div>
-            </div>
-
-            {/* Opti 2 */}
-            <div className="flex items-start md:items-center justify-between gap-4 p-4 rounded-[16px] hover:bg-white/[0.02] border border-transparent hover:border-[#1A1A1A] transition-all cursor-pointer group">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-space-gray group-hover:text-neon-mint transition-colors shrink-0">
-                  <Package size={16} strokeWidth={1.5} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase text-neon-mint tracking-wider font-bold mb-1">Matériel Pro</span>
-                  <span className="text-white/80 font-light text-[14px]">Investir dans de nouvelles machines</span>
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="text-[10px] uppercase text-space-gray tracking-widest block mb-1">Gain IS</span>
-                <span className="text-neon-mint font-medium whitespace-nowrap">-40.000 MAD</span>
-              </div>
-            </div>
-
-            {/* Opti 3 */}
-            <div className="flex items-start md:items-center justify-between gap-4 p-4 rounded-[16px] hover:bg-white/[0.02] border border-transparent hover:border-[#1A1A1A] transition-all cursor-pointer group">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-space-gray group-hover:text-neon-mint transition-colors shrink-0">
-                  <Users size={16} strokeWidth={1.5} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase text-neon-mint tracking-wider font-bold mb-1">Primes</span>
-                  <span className="text-white/80 font-light text-[14px]">Verser une prime exceptionnelle</span>
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="text-[10px] uppercase text-space-gray tracking-widest block mb-1">Gain IS</span>
-                <span className="text-neon-mint font-medium whitespace-nowrap">-12.000 MAD</span>
-              </div>
-            </div>
+              );
+            })}
 
           </div>
         </div>
