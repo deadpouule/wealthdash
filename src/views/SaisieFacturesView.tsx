@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useWealthStore } from '../store/useWealthStore';
 import { ArrowLeft, Plus, ScanLine, FileText, CheckCircle2 } from 'lucide-react';
 import { ViewType } from '../components/Sidebar';
 import { WealthEngine } from '../lib/WealthEngine';
+import { GoogleGenAI, Type } from '@google/genai';
 
 interface Props {
   onNavigate: (v: ViewType) => void;
@@ -15,52 +16,141 @@ export default function SaisieFacturesView({ onNavigate }: Props) {
 
   const [client, setClient] = useState('');
   const [amountHT, setAmountHT] = useState('');
+  const [tvaRate, setTvaRate] = useState('20');
   const [type, setType] = useState<'IN'|'OUT'>('IN');
   const [isScanning, setIsScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAdd = (e: any) => {
-    e.preventDefault();
-    if (!client || !amountHT) return;
-
-    const valHT = Number(amountHT);
+  const performAdd = (c: string, aHT: number, t: 'IN'|'OUT', rateVal: number) => {
+    const valHT = aHT;
+    const tvaVal = valHT * (rateVal / 100);
     const newFacture = {
       id: Math.random().toString(),
-      type,
+      type: t,
       amountHT: valHT,
-      tva: valHT * 0.20,
-      client,
+      tva: tvaVal,
+      client: c,
       date: new Date().toLocaleDateString('fr-FR')
     };
 
     const updatedFactures = [...facts, newFacture];
     
     // Simulate real-time impact on Business metrics
-    const impact = type === 'IN' ? valHT * 1.20 : -(valHT * 1.20); // TTC impacts Tresorerie
-    const newCA = type === 'IN' ? business.chiffreAffairesHT + valHT : business.chiffreAffairesHT;
-    const newRes = type === 'IN' ? business.resultatComptable + valHT : business.resultatComptable - valHT;
+    const impact = t === 'IN' ? valHT + tvaVal : -(valHT + tvaVal); // TTC impacts Tresorerie
+    const newCA = t === 'IN' ? business.chiffreAffairesHT + valHT : business.chiffreAffairesHT;
+    const newRes = t === 'IN' ? business.resultatComptable + valHT : business.resultatComptable - valHT;
 
     updateBusiness({
       factures: updatedFactures,
       tresorerie: business.tresorerie + impact,
       chiffreAffairesHT: newCA,
       resultatComptable: newRes,
-      fluxIn: type === 'IN' ? business.fluxIn + impact : business.fluxIn,
-      fluxOut: type === 'OUT' ? business.fluxOut + Math.abs(impact) : business.fluxOut
+      fluxIn: t === 'IN' ? business.fluxIn + impact : business.fluxIn,
+      fluxOut: t === 'OUT' ? business.fluxOut + Math.abs(impact) : business.fluxOut
     });
+  };
 
+  const handleAdd = (e: any) => {
+    e.preventDefault();
+    if (!client || !amountHT) return;
+    performAdd(client, Number(amountHT), type, Number(tvaRate));
     setClient('');
     setAmountHT('');
+    setTvaRate('20');
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const base64String = (event.target?.result as string).split(',')[1];
+          const mimeType = file.type;
+
+          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+          
+          const promptString = `Analyze this invoice or receipt. Extract the following information and return it strictly as JSON.
+If it's a receipt for a purchase made by the company (e.g. food, equipment, software like Apple), classify it as OUT. If it's an invoice issued BY the company to a client, classify it as IN. Most uploaded receipts are OUT.
+Provide:
+1. clientName: The name of the merchant, vendor, or client.
+2. amountHT: The amount without taxes (HT). If only TTC is visible, estimate HT by determining the likely tax rate.
+3. tvaRate: The likely VAT rate applied (extract 20, 14, 10, 7, or 0 based on context or explicit text on the receipt). Default to 20 if unsure.
+4. type: "IN" or "OUT".`;
+
+          const response = await ai.models.generateContent({
+            model: "gemini-3.1-pro-preview",
+            contents: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType,
+                    data: base64String,
+                  },
+                },
+                {
+                  text: promptString,
+                },
+              ]
+            },
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  clientName: { type: Type.STRING },
+                  amountHT: { type: Type.NUMBER },
+                  tvaRate: { type: Type.NUMBER },
+                  type: { type: Type.STRING, description: "Must be exactly IN or OUT" }
+                },
+                required: ["clientName", "amountHT", "type", "tvaRate"]
+              }
+            }
+          });
+
+          const responseText = response.text;
+          if (responseText) {
+            const data = JSON.parse(responseText.trim());
+            
+            const detectedRate = data.tvaRate ? Number(data.tvaRate) : 20;
+
+            setClient(data.clientName || 'Inconnu');
+            setAmountHT(data.amountHT?.toString() || '0');
+            setTvaRate(detectedRate.toString());
+            setType(data.type === 'IN' ? 'IN' : 'OUT');
+            
+            // Auto add
+            performAdd(data.clientName || 'Inconnu', Number(data.amountHT || 0), data.type === 'IN' ? 'IN' : 'OUT', detectedRate);
+            
+            setClient('');
+            setAmountHT('');
+            setTvaRate('20');
+          }
+        } catch (err) {
+          console.error("Failed to parse invoice", err);
+          alert("Erreur lors de l'analyse de l'image.");
+        } finally {
+          setIsScanning(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      setIsScanning(false);
+    }
   };
 
   const simulateScan = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      setClient('APPLE STORE MAROC');
-      setAmountHT('45000');
-      setType('OUT');
-      setIsScanning(false);
-    }, 1500);
+    fileInputRef.current?.click();
   };
+
+  const tvaCollectee = facts.filter(f => f.type === 'IN').reduce((acc, f) => acc + f.tva, 0);
+  const tvaDeductible = facts.filter(f => f.type === 'OUT').reduce((acc, f) => acc + f.tva, 0);
+  const tvaEstimee = tvaCollectee - tvaDeductible;
 
   return (
     <div className="space-y-12 animate-in fade-in duration-1000 px-6 md:px-10 pt-8 pb-20 w-full max-w-6xl mx-auto">
@@ -76,11 +166,19 @@ export default function SaisieFacturesView({ onNavigate }: Props) {
             Saisie & Factures
           </h2>
         </div>
+        <input 
+          type="file" 
+          accept="image/*" 
+          ref={fileInputRef} 
+          onChange={handleFileChange} 
+          className="hidden" 
+        />
         <button 
           onClick={simulateScan}
-          className="flex items-center gap-2 px-6 py-3 bg-neon-mint text-midnight rounded-full text-xs font-bold uppercase tracking-widest hover:brightness-110 shadow-[0_0_15px_rgba(52,199,89,0.3)] transition-all"
+          disabled={isScanning}
+          className="flex items-center gap-2 px-6 py-3 bg-neon-mint text-midnight rounded-full text-xs font-bold uppercase tracking-widest hover:brightness-110 shadow-[0_0_15px_rgba(52,199,89,0.3)] transition-all disabled:opacity-50"
         >
-           {isScanning ? <span className="animate-pulse">Analyse OCR...</span> : <><ScanLine size={16} /> Scanner Action</>}
+           {isScanning ? <span className="animate-pulse">Analyse AI...</span> : <><ScanLine size={16} /> Scanner (IA)</>}
         </button>
       </div>
 
@@ -93,9 +191,21 @@ export default function SaisieFacturesView({ onNavigate }: Props) {
                 <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">Client / Fournisseur</label>
                 <input required value={client} onChange={e=>setClient(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-mint/50" placeholder="Nom de l'entité" />
              </div>
-             <div>
-                <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">Montant HT (MAD)</label>
-                <input required type="number" value={amountHT} onChange={e=>setAmountHT(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-mint/50" placeholder="0" />
+             <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">Montant HT (MAD)</label>
+                  <input required type="number" value={amountHT} onChange={e=>setAmountHT(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-mint/50" placeholder="0" />
+               </div>
+               <div>
+                  <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">TVA (%)</label>
+                  <select value={tvaRate} onChange={e=>setTvaRate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-mint/50 appearance-none">
+                     <option value="20" className="bg-midnight">20% (Standard)</option>
+                     <option value="14" className="bg-midnight">14% (Transport, Énergie)</option>
+                     <option value="10" className="bg-midnight">10% (Restauration, Banque)</option>
+                     <option value="7" className="bg-midnight">7% (Eau, Fournitures)</option>
+                     <option value="0" className="bg-midnight">0% (Exonéré)</option>
+                  </select>
+               </div>
              </div>
              <div>
                 <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">Type de Flux</label>
@@ -110,9 +220,29 @@ export default function SaisieFacturesView({ onNavigate }: Props) {
            </form>
         </div>
 
-        {/* History */}
+        {/* TVA Summary & History */}
         <div className="lg:col-span-2 space-y-6">
-           <div className="flex items-center justify-between">
+           {/* TVA Synthesis Grid */}
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white/[0.02] border border-[#1A1A1A] p-5 rounded-2xl">
+                 <p className="text-[10px] uppercase tracking-widest text-space-gray font-bold mb-1">TVA Collectée</p>
+                 <p className="text-xl font-light text-white">{Number(tvaCollectee).toLocaleString('fr-FR')} <span className="text-xs text-space-gray">MAD</span></p>
+              </div>
+              <div className="bg-white/[0.02] border border-[#1A1A1A] p-5 rounded-2xl">
+                 <p className="text-[10px] uppercase tracking-widest text-space-gray font-bold mb-1">TVA Déductible</p>
+                 <p className="text-xl font-light text-white">{Number(tvaDeductible).toLocaleString('fr-FR')} <span className="text-xs text-space-gray">MAD</span></p>
+              </div>
+              <div className={`p-5 rounded-2xl border ${tvaEstimee > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-neon-mint/10 border-neon-mint/20'}`}>
+                 <p className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${tvaEstimee > 0 ? 'text-amber-500' : 'text-neon-mint'}`}>
+                   {tvaEstimee > 0 ? 'TVA à Décaisser (Est.)' : 'Crédit de TVA (Est.)'}
+                 </p>
+                 <p className={`text-xl font-light ${tvaEstimee > 0 ? 'text-amber-500' : 'text-neon-mint'}`}>
+                   {Math.abs(Number(tvaEstimee)).toLocaleString('fr-FR')} <span className="text-xs opacity-70">MAD</span>
+                 </p>
+              </div>
+           </div>
+
+           <div className="flex items-center justify-between pt-4">
              <h3 className="text-white font-medium">Historique Récent</h3>
              <span className="text-space-gray text-sm">{facts.length} documents</span>
            </div>

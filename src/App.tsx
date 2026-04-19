@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import Sidebar, { ViewType } from './components/Sidebar';
 import Header from './components/Header';
 import DashboardView from './components/DashboardView';
@@ -137,9 +138,17 @@ export default function App() {
         <Header />
         
         <div className="w-full max-w-7xl mx-auto px-0 md:px-4">
-          <div className="animate-in fade-in duration-700">
-            {renderView()}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentView}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {renderView()}
+            </motion.div>
+          </AnimatePresence>
 
           <footer className="px-6 md:px-10 py-12 border-t border-[#1A1A1A] flex flex-col md:flex-row justify-between items-center gap-6 mt-6 opacity-30">
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 text-center">
