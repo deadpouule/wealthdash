@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Google AI Studio App</title>
+    <script>
+      // Prevent browser crypto wallet extensions (MetaMask, Rabby, etc.) 
+      // from throwing unhandled errors and crashing the dev overlay
+      window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('Cannot redefine property: ethereum')) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && e.reason.message && e.reason.message.includes('Cannot redefine property: ethereum')) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
