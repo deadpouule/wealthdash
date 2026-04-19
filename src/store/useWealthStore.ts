@@ -6,6 +6,14 @@ interface Facture { id: string; type: 'IN' | 'OUT'; amountHT: number; tva: numbe
 interface Employe { id: string; role: string; salaryNet: number; costGlobal: number; }
 interface Asset { id: string; category: string; name: string; value: number; }
 
+export interface CalendarEvent {
+  id: string;
+  type: 'RENTREÉ' | 'SORTIE';
+  amount: number;
+  label: string;
+  dateStr: string; // Format YYYY-MM-DD for easy mapping
+}
+
 interface WealthState {
   mode: UserMode;
   toggleMode: () => void;
@@ -34,10 +42,14 @@ interface WealthState {
     employes: Employe[];
   };
 
+  calendarEvents: CalendarEvent[];
+  addCalendarEvent: (event: CalendarEvent) => void;
+  deleteCalendarEvent: (id: string) => void;
+
   updateParticulier: (data: Partial<WealthState['particulier']>) => void;
   updateBusiness: (data: Partial<WealthState['business']>) => void;
   
-  clearData: () => void; // Pour reseter le localStorage
+  clearData: () => void;
 }
 
 export const useWealthStore = create<WealthState>((set) => ({
@@ -81,6 +93,10 @@ export const useWealthStore = create<WealthState>((set) => ({
     employes: []
   },
 
+  calendarEvents: [],
+  addCalendarEvent: (event) => set((state) => ({ calendarEvents: [...state.calendarEvents, event] })),
+  deleteCalendarEvent: (id) => set((state) => ({ calendarEvents: state.calendarEvents.filter(e => e.id !== id) })),
+
   updateParticulier: (data) => set((state) => ({
     particulier: { ...state.particulier, ...data }
   })),
@@ -95,7 +111,8 @@ export const useWealthStore = create<WealthState>((set) => ({
     },
     business: {
       tresorerie: 0, fluxIn: 0, fluxOut: 0, stock: 0, dettes: 0, resultatComptable: 0, chiffreAffairesHT: 0, factures: [], employes: []
-    }
+    },
+    calendarEvents: []
   }))
 }));
 

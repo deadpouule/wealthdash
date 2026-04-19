@@ -113,34 +113,34 @@ export default function GestionRHView({ onNavigate }: Props) {
            </div>
            
            <div className="space-y-3">
-             {employes.length === 0 ? (
-               <div className="bg-white/[0.01] border border-[#1A1A1A] rounded-[20px] p-10 flex flex-col items-center justify-center text-center">
+              {employes.length === 0 ? (
+               <div className="bg-white/[0.01] border border-white/10 backdrop-blur-xl rounded-[20px] p-10 flex flex-col items-center justify-center text-center">
                  <Users className="text-space-gray mb-4" size={40} strokeWidth={1} />
                  <p className="text-space-gray font-light">Aucun salarié dans la base de données.</p>
                </div>
              ) : (
                employes.map((emp) => (
-                 <div key={emp.id} className="bg-white/[0.02] border border-[#1A1A1A] rounded-[16px] p-5 flex flex-col md:flex-row md:items-center gap-4">
+                 <div key={emp.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[16px] p-5 flex flex-col md:flex-row md:items-center gap-4 transition-all duration-300 hover:bg-white/10 hover:border-[#34C759]/50 active:scale-[0.98]">
                    <div className="flex items-center gap-4 flex-1">
                      <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/80 shrink-0">
                         <Users size={16} />
                      </div>
                      <div>
-                       <p className="text-white font-medium text-sm md:text-base">{emp.role}</p>
-                       <p className="text-space-gray text-xs mt-0.5">Base cible : {Number(emp.salaryNet).toLocaleString()} MAD NET</p>
+                       <p className="text-white font-light text-sm md:text-base tracking-wide">{emp.role}</p>
+                       <p className="text-space-gray text-[10px] uppercase font-bold tracking-widest mt-0.5">Base cible : {Number(emp.salaryNet).toLocaleString()} MAD NET</p>
                      </div>
                    </div>
-                   <div className="bg-neutral-900 px-4 py-2 rounded-lg border border-[#1A1A1A] text-right shrink-0">
+                   <div className="bg-transparent px-4 text-right shrink-0">
                      <p className="text-[10px] text-space-gray uppercase tracking-widest mb-1">Coût Réel Employeur</p>
                      <p className="font-semibold md:text-lg text-white">
                        {Number(emp.costGlobal.toFixed(0)).toLocaleString('fr-FR')} MAD
                      </p>
                    </div>
                    <div className="flex items-center justify-end gap-3 shrink-0 ml-2">
-                     <button onClick={() => handleEdit(emp.id)} className="text-space-gray hover:text-neon-mint transition-colors">
+                     <button onClick={() => handleEdit(emp.id)} className="text-gray-500 hover:text-[#34C759] transition-all duration-300 active:scale-[0.98]">
                        <Pencil size={18} strokeWidth={1.5} />
                      </button>
-                     <button onClick={() => handleDelete(emp.id)} className="text-space-gray hover:text-red-500 transition-colors">
+                     <button onClick={() => handleDelete(emp.id)} className="text-gray-500 hover:text-red-500 transition-all duration-300 active:scale-[0.98]">
                        <Trash2 size={18} strokeWidth={1.5} />
                      </button>
                    </div>

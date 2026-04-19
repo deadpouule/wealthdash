@@ -21,20 +21,20 @@ export default function BusinessCards({ onNavigate }: { onNavigate?: (v: any) =>
         <div 
           key={asset.title} 
           onClick={() => onNavigate?.(asset.path)}
-          className="bg-white/[0.03] backdrop-blur-[25px] border border-[#1A1A1A] rounded-[16px] p-5 md:p-6 transition-all duration-500 flex flex-col justify-between gap-4 cursor-pointer active:scale-[0.98] hover:border-white/20 relative group"
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[12px] p-4 md:p-6 transition-all duration-300 flex flex-col justify-between gap-3 shadow-[inset_0_1px_4px_rgba(255,255,255,0.02)] cursor-pointer active:scale-[0.98] hover:bg-white/10 hover:border-[#34C759]/50 relative group"
         >
           {asset.hasWarning && (
             <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
           )}
-          <div className="w-8 h-8 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-space-gray transition-colors group-hover:bg-white/10 group-hover:text-white">
-            <asset.icon size={14} strokeWidth={1.5} />
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-space-gray transition-colors opacity-80 shrink-0 group-hover:text-[#34C759]">
+            <asset.icon size={18} strokeWidth={1.5} />
           </div>
           
-          <div className="mt-2 text-left">
-            <p className="text-[11px] md:text-[13px] text-space-gray tracking-widest uppercase mb-1.5 font-bold">
+          <div className="mt-1">
+            <p className="text-[11px] md:text-[13px] text-space-gray tracking-wide mb-1 font-light">
               {asset.title}
             </p>
-            <h3 className="text-xl md:text-2xl font-light text-white tracking-tight">
+            <h3 className="text-sm md:text-xl font-bold text-white tracking-tight">
               {asset.value}
             </h3>
           </div>

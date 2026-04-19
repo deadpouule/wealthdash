@@ -207,21 +207,21 @@ Provide:
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form */}
-        <div className="lg:col-span-1 bg-white/[0.02] border border-[#1A1A1A] rounded-[24px] p-6 h-fit">
-           <h3 className="text-white font-medium mb-6">Ajouter manuellement</h3>
+        <div className="lg:col-span-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[24px] p-6 h-fit">
+           <h3 className="text-white font-medium mb-6 tracking-wide">Ajouter manuellement</h3>
            <form onSubmit={handleAdd} className="space-y-5">
              <div>
-                <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">Client / Fournisseur</label>
-                <input required value={client} onChange={e=>setClient(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-mint/50" placeholder="Nom de l'entité" />
+                <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-light">Client / Fournisseur</label>
+                <input required value={client} onChange={e=>setClient(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#34C759]/50 transition-colors" placeholder="Nom de l'entité" />
              </div>
              <div className="grid grid-cols-2 gap-4">
                <div>
-                  <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">Montant HT (MAD)</label>
-                  <input required type="number" value={amountHT} onChange={e=>setAmountHT(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-mint/50" placeholder="0" />
+                  <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-light">Montant HT (MAD)</label>
+                  <input required type="number" value={amountHT} onChange={e=>setAmountHT(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#34C759]/50 transition-colors" placeholder="0" />
                </div>
                <div>
-                  <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">TVA (%)</label>
-                  <select value={tvaRate} onChange={e=>setTvaRate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-mint/50 appearance-none">
+                  <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-light">TVA (%)</label>
+                  <select value={tvaRate} onChange={e=>setTvaRate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#34C759]/50 appearance-none transition-colors">
                      <option value="20" className="bg-midnight">20% (Standard)</option>
                      <option value="14" className="bg-midnight">14% (Transport, Énergie)</option>
                      <option value="10" className="bg-midnight">10% (Restauration, Banque)</option>
@@ -231,13 +231,13 @@ Provide:
                </div>
              </div>
              <div>
-                <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-bold">Type de Flux</label>
+                <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-light">Type de Flux</label>
                 <div className="flex bg-white/5 p-1 rounded-xl">
-                  <button type="button" onClick={()=>setType('IN')} className={`flex-1 py-2 text-xs font-bold rounded-lg ${type==='IN'?'bg-neon-mint text-midnight':'text-space-gray'}`}>ENCAISSEMENT</button>
-                  <button type="button" onClick={()=>setType('OUT')} className={`flex-1 py-2 text-xs font-bold rounded-lg ${type==='OUT'?'bg-white/10 text-white':'text-space-gray'}`}>DÉCAISSEMENT</button>
+                  <button type="button" onClick={()=>setType('IN')} className={`flex-1 py-2 text-[11px] font-bold tracking-widest uppercase rounded-lg transition-colors ${type==='IN'?'bg-[#34C759] text-midnight':'text-space-gray'}`}>ENCAISSEMENT</button>
+                  <button type="button" onClick={()=>setType('OUT')} className={`flex-1 py-2 text-[11px] font-bold tracking-widest uppercase rounded-lg transition-colors ${type==='OUT'?'bg-white/10 text-white':'text-space-gray'}`}>DÉCAISSEMENT</button>
                 </div>
              </div>
-             <button type="submit" className="w-full py-4 bg-white text-midnight font-bold flex items-center justify-center gap-2 rounded-xl mt-4 hover:bg-neutral-200">
+             <button type="submit" className="w-full py-4 bg-white text-midnight font-bold flex items-center justify-center gap-2 rounded-xl mt-4 hover:bg-neutral-200 transition-colors active:scale-[0.98]">
                <Plus size={16} /> Enregistrer
              </button>
            </form>
@@ -247,58 +247,58 @@ Provide:
         <div className="lg:col-span-2 space-y-6">
            {/* TVA Synthesis Grid */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white/[0.02] border border-[#1A1A1A] p-5 rounded-2xl">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl transition-all duration-300 hover:bg-white/10">
                  <p className="text-[10px] uppercase tracking-widest text-space-gray font-bold mb-1">TVA Collectée</p>
-                 <p className="text-xl font-light text-white">{Number(tvaCollectee).toLocaleString('fr-FR')} <span className="text-xs text-space-gray">MAD</span></p>
+                 <p className="text-xl font-bold text-white">{Number(tvaCollectee).toLocaleString('fr-FR')} <span className="text-xs text-space-gray font-light">MAD</span></p>
               </div>
-              <div className="bg-white/[0.02] border border-[#1A1A1A] p-5 rounded-2xl">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl transition-all duration-300 hover:bg-white/10">
                  <p className="text-[10px] uppercase tracking-widest text-space-gray font-bold mb-1">TVA Déductible</p>
-                 <p className="text-xl font-light text-white">{Number(tvaDeductible).toLocaleString('fr-FR')} <span className="text-xs text-space-gray">MAD</span></p>
+                 <p className="text-xl font-bold text-white">{Number(tvaDeductible).toLocaleString('fr-FR')} <span className="text-xs text-space-gray font-light">MAD</span></p>
               </div>
-              <div className={`p-5 rounded-2xl border ${tvaEstimee > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-neon-mint/10 border-neon-mint/20'}`}>
-                 <p className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${tvaEstimee > 0 ? 'text-amber-500' : 'text-neon-mint'}`}>
+              <div className={`p-5 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${tvaEstimee > 0 ? 'bg-amber-500/10 border-amber-500/20 shadow-[inset_0_1px_4px_rgba(245,158,11,0.05)]' : 'bg-[#34C759]/10 border-[#34C759]/20 shadow-[inset_0_1px_4px_rgba(52,199,89,0.05)]'}`}>
+                 <p className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${tvaEstimee > 0 ? 'text-amber-500' : 'text-[#34C759]'}`}>
                    {tvaEstimee > 0 ? 'TVA à Décaisser (Est.)' : 'Crédit de TVA (Est.)'}
                  </p>
-                 <p className={`text-xl font-light ${tvaEstimee > 0 ? 'text-amber-500' : 'text-neon-mint'}`}>
-                   {Math.abs(Number(tvaEstimee)).toLocaleString('fr-FR')} <span className="text-xs opacity-70">MAD</span>
+                 <p className={`text-xl font-bold ${tvaEstimee > 0 ? 'text-amber-500' : 'text-[#34C759]'}`}>
+                   {Math.abs(Number(tvaEstimee)).toLocaleString('fr-FR')} <span className="text-xs opacity-70 font-light">MAD</span>
                  </p>
               </div>
            </div>
 
            <div className="flex items-center justify-between pt-4">
-             <h3 className="text-white font-medium">Historique Récent</h3>
+             <h3 className="text-white font-medium tracking-wide">Historique Récent</h3>
              <span className="text-space-gray text-sm">{facts.length} documents</span>
            </div>
            
            <div className="space-y-3">
              {facts.length === 0 ? (
-               <div className="bg-white/[0.01] border border-[#1A1A1A] rounded-[20px] p-10 flex flex-col items-center justify-center text-center">
+               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[20px] p-10 flex flex-col items-center justify-center text-center">
                  <FileText className="text-space-gray mb-4" size={40} strokeWidth={1} />
                  <p className="text-space-gray font-light">Aucune facture enregistrée pour le moment.</p>
                </div>
              ) : (
                [...facts].reverse().map((f) => (
-                 <div key={f.id} className="bg-white/[0.02] border border-[#1A1A1A] rounded-[16px] p-5 flex items-center gap-4">
+                 <div key={f.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[16px] p-5 flex items-center gap-4 transition-all duration-300 hover:bg-white/10 hover:border-[#34C759]/50 active:scale-[0.98]">
                    <div className="flex items-center gap-4 flex-1">
-                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${f.type === 'IN' ? 'bg-neon-mint/10 text-neon-mint' : 'bg-red-500/10 text-red-500'}`}>
+                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${f.type === 'IN' ? 'bg-[#34C759]/10 text-[#34C759]' : 'bg-red-500/10 text-red-500'}`}>
                         {f.type === 'IN' ? <Plus size={16} /> : <span className="text-lg leading-none mb-1">-</span>}
                      </div>
                      <div>
-                       <p className="text-white font-medium text-sm md:text-base">{f.client}</p>
-                       <p className="text-space-gray text-xs mt-0.5">{f.date} &bull; TVA : {f.tva.toLocaleString()} MAD</p>
+                       <p className="text-white font-light text-sm md:text-base tracking-wide">{f.client}</p>
+                       <p className="text-space-gray text-[10px] uppercase font-bold tracking-widest mt-0.5">{f.date} &bull; TVA : {f.tva.toLocaleString()} MAD</p>
                      </div>
                    </div>
                    <div className="text-right shrink-0">
-                     <p className={`font-semibold md:text-lg ${f.type === 'IN' ? 'text-neon-mint' : 'text-white'}`}>
+                     <p className={`font-semibold md:text-lg ${f.type === 'IN' ? 'text-[#34C759]' : 'text-white'}`}>
                        {f.type === 'IN' ? '+' : '-'}{(f.amountHT + f.tva).toLocaleString('fr-FR')} MAD
                      </p>
-                     <p className="text-space-gray text-xs mt-0.5">TTC</p>
+                     <p className="text-space-gray text-[10px] uppercase tracking-widest mt-0.5">TTC</p>
                    </div>
                    <div className="flex items-center gap-3 ml-4 shrink-0 transition-opacity">
-                     <button onClick={() => handleEdit(f.id)} className="text-space-gray hover:text-neon-mint transition-colors">
+                     <button onClick={() => handleEdit(f.id)} className="text-gray-500 hover:text-[#34C759] transition-all duration-300 active:scale-[0.98]">
                        <Pencil size={18} strokeWidth={1.5} />
                      </button>
-                     <button onClick={() => handleDelete(f.id)} className="text-space-gray hover:text-red-500 transition-colors">
+                     <button onClick={() => handleDelete(f.id)} className="text-gray-500 hover:text-red-500 transition-all duration-300 active:scale-[0.98]">
                        <Trash2 size={18} strokeWidth={1.5} />
                      </button>
                    </div>

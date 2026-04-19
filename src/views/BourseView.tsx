@@ -59,67 +59,65 @@ export default function BourseView({ onNavigate }: { onNavigate: (v: ViewType) =
       </div>
 
       {/* Holdings Table */}
-      <div className="mt-16 w-full max-w-5xl">
-        <div className="glass-card rounded-3xl overflow-hidden border border-white/5">
-          {/* Table Header */}
-          <div className="grid grid-cols-5 gap-4 px-8 py-5 border-b border-white/5 bg-white/[0.01]">
-            <div className="col-span-2 text-[10px] uppercase tracking-widest text-space-gray font-bold">Valeur (Action)</div>
-            <div className="text-[10px] uppercase tracking-widest text-space-gray font-bold text-right">Quantité</div>
-            <div className="text-[10px] uppercase tracking-widest text-space-gray font-bold text-right">Cours (MAD)</div>
-            <div className="text-[10px] uppercase tracking-widest text-space-gray font-bold text-right">Variation (%)</div>
-          </div>
+      <div className="mt-16 w-full max-w-5xl space-y-4">
+        {/* Table Header */}
+        <div className="grid grid-cols-5 gap-4 px-8 py-2">
+          <div className="col-span-2 text-[10px] uppercase tracking-widest text-space-gray font-bold">Valeur (Action)</div>
+          <div className="text-[10px] uppercase tracking-widest text-space-gray font-bold text-right">Quantité</div>
+          <div className="text-[10px] uppercase tracking-widest text-space-gray font-bold text-right">Cours (MAD)</div>
+          <div className="text-[10px] uppercase tracking-widest text-space-gray font-bold text-right pr-20">Variation</div>
+        </div>
 
-          {/* Table Body */}
-          <div className="flex flex-col">
-            {holdings.map((holding) => (
-              <div 
-                key={holding.id} 
-                className="grid grid-cols-5 gap-4 px-8 py-6 items-center border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors relative"
-              >
-                <div className="col-span-2 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full border border-white/5 bg-white/5 flex items-center justify-center text-white/80">
-                    <span className="text-xs font-medium">{holding.label.substring(0, 3).toUpperCase()}</span>
-                  </div>
-                  <div>
-                    <h4 className="text-white font-medium text-base mb-1">{holding.label}</h4>
-                    <p className="text-xs text-space-gray">Bourse de Casablanca</p>
-                  </div>
+        {/* Table Body */}
+        <div className="flex flex-col gap-3">
+          {holdings.map((holding) => (
+            <div 
+              key={holding.id} 
+              className="grid grid-cols-5 gap-4 px-8 py-6 items-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-[16px] transition-all duration-300 hover:bg-white/10 hover:border-[#34C759]/50 active:scale-[0.98] relative"
+            >
+              <div className="col-span-2 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-white/80">
+                  <span className="text-xs font-light">{holding.label.substring(0, 3).toUpperCase()}</span>
                 </div>
-
-                <div className="text-right text-white font-light text-lg">
-                  {holding.qty}
-                </div>
-
-                <div className="text-right text-white font-light text-lg">
-                  {holding.price.toFixed(2)}
-                </div>
-
-                <div className="text-right flex items-center justify-end gap-6 flex-1 pr-16">
-                  {/* Sparkline */}
-                  <div className="hidden lg:block w-16">
-                    <svg viewBox="0 0 100 30" className={`w-full h-8 fill-none ${holding.isPositive ? 'stroke-neon-mint drop-shadow-[0_0_8px_rgba(52,199,89,0.4)]' : 'stroke-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]'}`}>
-                      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d={holding.points} />
-                    </svg>
-                  </div>
-                  
-                  <div className={`flex items-center gap-1 font-medium ${holding.isPositive ? 'text-neon-mint' : 'text-red-500'}`}>
-                    {holding.isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                    <span className="text-sm tracking-wide">{holding.change}</span>
-                  </div>
-                </div>
-                
-                {/* Actions */}
-                <div className="absolute right-8 flex items-center gap-3">
-                    <button onClick={() => handleEdit(holding.id)} className="text-space-gray hover:text-neon-mint transition-colors">
-                      <Pencil size={18} strokeWidth={1.5} />
-                    </button>
-                    <button onClick={() => handleDelete(holding.id)} className="text-space-gray hover:text-red-500 transition-colors">
-                      <Trash2 size={18} strokeWidth={1.5} />
-                    </button>
+                <div>
+                  <h4 className="text-white font-light text-base tracking-wide mb-1">{holding.label}</h4>
+                  <p className="text-[10px] tracking-widest uppercase font-bold text-space-gray">Bourse de Casablanca</p>
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="text-right text-white font-bold text-lg">
+                {holding.qty}
+              </div>
+
+              <div className="text-right text-white font-bold text-lg">
+                {holding.price.toFixed(2)}
+              </div>
+
+              <div className="text-right flex items-center justify-end gap-6 flex-1 pr-16">
+                {/* Sparkline */}
+                <div className="hidden lg:block w-16">
+                  <svg viewBox="0 0 100 30" className={`w-full h-8 fill-none ${holding.isPositive ? 'stroke-[#34C759] drop-shadow-[0_0_8px_rgba(52,199,89,0.4)]' : 'stroke-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]'}`}>
+                    <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d={holding.points} />
+                  </svg>
+                </div>
+                
+                <div className={`flex items-center gap-1 font-medium ${holding.isPositive ? 'text-[#34C759]' : 'text-red-500'}`}>
+                  {holding.isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                  <span className="text-sm tracking-wide">{holding.change}</span>
+                </div>
+              </div>
+              
+              {/* Actions */}
+              <div className="absolute right-8 flex items-center gap-3">
+                  <button onClick={() => handleEdit(holding.id)} className="text-gray-500 hover:text-[#34C759] transition-all duration-300 active:scale-[0.98]">
+                    <Pencil size={18} strokeWidth={1.5} />
+                  </button>
+                  <button onClick={() => handleDelete(holding.id)} className="text-gray-500 hover:text-red-500 transition-all duration-300 active:scale-[0.98]">
+                    <Trash2 size={18} strokeWidth={1.5} />
+                  </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

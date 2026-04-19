@@ -46,8 +46,8 @@ export default function Sidebar({ currentView, onNavigate, mode = 'Particulier' 
               key={item.id}
               onClick={() => onNavigate(item.id)}
               className={cn(
-                "w-14 h-14 md:w-10 md:h-10 rounded-xl md:rounded-md transition-colors duration-500 group relative flex flex-col md:flex-row items-center justify-center",
-                isActive ? "text-neon-mint md:text-white" : "text-space-gray hover:text-white"
+                "w-14 h-14 md:w-10 md:h-10 rounded-xl md:rounded-md transition-all duration-300 group relative flex flex-col md:flex-row items-center justify-center active:scale-[0.98]",
+                isActive ? "opacity-100 text-[#34C759]" : "opacity-40 text-white hover:opacity-100 hover:bg-white/10"
               )}
             >
               {isActive && (

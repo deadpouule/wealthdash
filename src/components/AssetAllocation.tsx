@@ -23,7 +23,7 @@ export default function AssetAllocation() {
 
   return (
     <div className="px-4 md:px-10 mt-10 mb-6 flex w-full justify-center">
-      <div className="bg-white/[0.03] backdrop-blur-[20px] border border-[#1A1A1A] rounded-[24px] p-10 md:p-16 flex flex-col md:flex-row items-center justify-center gap-16 md:gap-32 w-full max-w-5xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.8)]">
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[24px] p-10 md:p-16 flex flex-col md:flex-row items-center justify-center gap-16 md:gap-32 w-full max-w-5xl shadow-[inset_0_1px_4px_rgba(255,255,255,0.02)]">
         
         {/* The Chart */}
         <div className="relative w-64 h-64 md:w-[320px] md:h-[320px] flex-shrink-0">
@@ -62,14 +62,14 @@ export default function AssetAllocation() {
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] md:text-xs text-space-gray uppercase tracking-[0.2em] font-bold mb-2">Net Worth</span>
-            <span className="text-2xl md:text-3xl text-white font-medium tracking-tight whitespace-nowrap">{Number(total).toLocaleString('fr-FR')} MAD</span>
+            <span className="text-2xl md:text-3xl text-white font-bold tracking-tight whitespace-nowrap">{Number(total).toLocaleString('fr-FR')} MAD</span>
           </div>
         </div>
 
         {/* Legend */}
         <div className="flex flex-col gap-5 w-full md:w-auto min-w-[220px]">
           {chartData.map((item, i) => (
-            <div key={i} className="flex items-center justify-between border-b border-[#1A1A1A] pb-3 last:border-b-0 last:pb-0">
+            <div key={i} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-b-0 last:pb-0">
               <div className="flex items-center gap-4">
                 <span 
                   className="w-2 h-2 rounded-full shadow-sm" 

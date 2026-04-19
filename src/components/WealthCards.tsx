@@ -68,17 +68,17 @@ export default function WealthCards({ onNavigate }: WealthCardsProps) {
               if ((asset.title === 'Cash' || asset.title === 'Épargne') && onNavigate) onNavigate('cash-epargne');
               if (asset.title === 'Bourse' && onNavigate) onNavigate('bourse');
             }}
-            className={`bg-white/[0.03] backdrop-blur-[25px] border border-[#1A1A1A] rounded-[12px] p-4 md:p-6 transition-all duration-500 flex flex-col justify-between gap-3 ${isClickable ? 'cursor-pointer active:scale-[0.98] md:hover:border-white/20' : 'cursor-default'}`}
+            className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-[12px] p-4 md:p-6 transition-all duration-300 flex flex-col justify-between gap-3 shadow-[inset_0_1px_4px_rgba(255,255,255,0.02)] ${isClickable ? 'cursor-pointer active:scale-[0.98] hover:bg-white/10 hover:border-[#34C759]/50' : 'cursor-default'}`}
           >
-            <div className="w-4 h-4 md:w-5 md:h-5 text-space-gray transition-colors opacity-80">
-              <asset.icon size={18} strokeWidth={1} />
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-space-gray transition-colors opacity-80 shrink-0">
+              <asset.icon size={18} strokeWidth={1.5} />
             </div>
             
             <div className="mt-1">
-              <p className="text-[11px] md:text-[13px] text-space-gray tracking-wide mb-1 font-medium">
+              <p className="text-[11px] md:text-[13px] text-space-gray tracking-wide mb-1 font-light">
                 {asset.title}
               </p>
-              <h3 className="text-sm md:text-xl font-normal text-white tracking-tight">
+              <h3 className="text-sm md:text-xl font-bold text-white tracking-tight">
                 {Number(asset.value).toLocaleString('fr-FR')} MAD
               </h3>
             </div>

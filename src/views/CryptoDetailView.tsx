@@ -53,26 +53,25 @@ export default function CryptoDetailView({ onNavigate }: { onNavigate: (v: ViewT
       {/* List View */}
       <div className="max-w-4xl mx-auto space-y-4">
         {cryptos.map(crypto => (
-          <div key={crypto.id} className="bg-white/[0.03] p-6 flex justify-between items-center rounded-[16px] group transition-all border border-[#1A1A1A] hover:bg-white/[0.04]">
-             <div className="flex items-center gap-6">
-               <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-white/50 group-hover:text-neon-mint transition-colors">
-                 {/* Simplified icon logic for example */}
+          <div key={crypto.id} className="bg-white/5 backdrop-blur-xl p-6 flex justify-between items-center rounded-[16px] group transition-all duration-300 border border-white/10 hover:bg-white/10 hover:border-[#34C759]/50 active:scale-[0.98]">
+             <div className="flex items-center gap-6 flex-1">
+               <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-white/50 group-hover:text-[#34C759] transition-colors">
                  <div className="w-4 h-4 bg-white/20 rounded-full" />
                </div>
                <div>
-                 <p className="text-lg text-white font-medium">{crypto.name} ({crypto.symbol})</p>
-                 <p className="text-xs text-space-gray">{crypto.qty} {crypto.symbol}</p>
+                 <p className="text-lg text-white font-light tracking-wide">{crypto.name} ({crypto.symbol})</p>
+                 <p className="text-[10px] tracking-widest uppercase font-bold text-space-gray">{crypto.qty} {crypto.symbol}</p>
                </div>
              </div>
-             <div className="text-right flex-1 pr-6 border-r border-[#1A1A1A] mr-6">
-               <p className="text-lg text-white font-medium">{crypto.valueMAD.toLocaleString('fr-FR')} MAD</p>
-               <p className="text-xs text-neon-mint font-bold tracking-widest">{crypto.change}</p>
+             <div className="text-right shrink-0 pr-6 border-r border-white/10 mr-6">
+               <p className="text-lg text-white font-bold">{crypto.valueMAD.toLocaleString('fr-FR')} MAD</p>
+               <p className="text-[10px] tracking-widest uppercase text-[#34C759] font-bold">{crypto.change}</p>
              </div>
              <div className="flex items-center gap-3 shrink-0">
-               <button onClick={() => handleEdit(crypto.id)} className="text-space-gray hover:text-neon-mint transition-colors">
+               <button onClick={() => handleEdit(crypto.id)} className="text-gray-500 hover:text-[#34C759] transition-all duration-300 active:scale-[0.98]">
                  <Pencil size={18} strokeWidth={1.5} />
                </button>
-               <button onClick={() => handleDelete(crypto.id)} className="text-space-gray hover:text-red-500 transition-colors">
+               <button onClick={() => handleDelete(crypto.id)} className="text-gray-500 hover:text-red-500 transition-all duration-300 active:scale-[0.98]">
                  <Trash2 size={18} strokeWidth={1.5} />
                </button>
              </div>
