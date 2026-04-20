@@ -3,7 +3,7 @@ import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
-export type ViewType = 'dashboard' | 'cashflow' | 'taxes' | 'community' | 'crypto-detail' | 'immobilier' | 'cash-epargne' | 'bourse' | 'factures' | 'rh' | 'fiscalite' | 'business-tresorerie' | 'business-flux' | 'business-stock' | 'business-rh' | 'business-dettes' | 'business-fiscal';
+export type ViewType = 'dashboard' | 'cashflow' | 'taxes' | 'community' | 'crypto-detail' | 'immobilier' | 'cash' | 'epargne' | 'bourse' | 'or' | 'factures' | 'rh' | 'fiscalite' | 'business-tresorerie' | 'business-flux' | 'business-stock' | 'business-rh' | 'business-dettes' | 'business-fiscal';
 
 const particulierItems = [
   { id: 'dashboard' as ViewType, icon: LayoutDashboard, label: 'Dashboard' },

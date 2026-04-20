@@ -15,6 +15,7 @@ import CryptoDetailView from './views/CryptoDetailView';
 import ImmobilierView from './views/ImmobilierView';
 import CashEpargneView from './views/CashEpargneView';
 import BourseView from './views/BourseView';
+import OrMetauxView from './views/OrMetauxView';
 import OnboardingView from './views/OnboardingView';
 import BusinessOnboardingView from './views/BusinessOnboardingView';
 import SaisieFacturesView from './views/SaisieFacturesView';
@@ -96,10 +97,14 @@ export default function App() {
         return <CryptoDetailView onNavigate={setCurrentView} />;
       case 'immobilier':
         return <ImmobilierView onNavigate={setCurrentView} />;
-      case 'cash-epargne':
-        return <CashEpargneView onNavigate={setCurrentView} />;
+      case 'cash':
+        return <CashEpargneView onNavigate={setCurrentView} initialTab="cash" />;
+      case 'epargne':
+        return <CashEpargneView onNavigate={setCurrentView} initialTab="epargne" />;
       case 'bourse':
         return <BourseView onNavigate={setCurrentView} />;
+      case 'or':
+        return <OrMetauxView onNavigate={setCurrentView} />;
       case 'factures':
         return <SaisieFacturesView onNavigate={setCurrentView} />;
       case 'rh':

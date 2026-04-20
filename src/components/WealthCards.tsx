@@ -57,7 +57,7 @@ export default function WealthCards({ onNavigate }: WealthCardsProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5 px-4 md:px-10">
       {assets.map((asset) => {
-        const isClickable = ['Crypto', 'Immobilier', 'Cash', 'Épargne', 'Bourse'].includes(asset.title);
+        const isClickable = ['Crypto', 'Immobilier', 'Cash', 'Épargne', 'Bourse', 'Or & Métaux'].includes(asset.title);
         
         return (
           <div 
@@ -65,8 +65,10 @@ export default function WealthCards({ onNavigate }: WealthCardsProps) {
             onClick={() => {
               if (asset.title === 'Crypto' && onNavigate) onNavigate('crypto-detail');
               if (asset.title === 'Immobilier' && onNavigate) onNavigate('immobilier');
-              if ((asset.title === 'Cash' || asset.title === 'Épargne') && onNavigate) onNavigate('cash-epargne');
+              if (asset.title === 'Cash' && onNavigate) onNavigate('cash');
+              if (asset.title === 'Épargne' && onNavigate) onNavigate('epargne');
               if (asset.title === 'Bourse' && onNavigate) onNavigate('bourse');
+              if (asset.title === 'Or & Métaux' && onNavigate) onNavigate('or');
             }}
             className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-[12px] p-4 md:p-6 transition-all duration-300 flex flex-col justify-between gap-3 shadow-[inset_0_1px_4px_rgba(255,255,255,0.02)] ${isClickable ? 'cursor-pointer active:scale-[0.98] hover:bg-white/10 hover:border-[#34C759]/50' : 'cursor-default'}`}
           >
