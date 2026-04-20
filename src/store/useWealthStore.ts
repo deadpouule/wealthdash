@@ -2,12 +2,15 @@ import { create } from 'zustand';
 
 export type UserMode = 'Particulier' | 'Business';
 
-interface Facture { id: string; type: 'IN' | 'OUT'; amountHT: number; tva: number; date: string; client: string; }
-interface Employe { id: string; role: string; salaryNet: number; costGlobal: number; }
+interface Facture { id: string; type: 'IN' | 'OUT'; category: string; amountHT: number; tva: number; date: string; client: string; }
+interface Employe { id: string; name: string; role: string; salaryNet: number; costGlobal: number; }
 interface Asset { id: string; category: string; name: string; value: number; status?: string; qty?: number; price?: number; points?: string; }
 
 interface InOutTransaction { id: string; type: 'IN' | 'OUT'; category: string; label: string; amount: number; }
 interface ExpensePlan { category: string; planned: number; }
+
+export interface StockItem { id: string; name: string; qty: number; unitPrice: number; }
+export interface BusinessLoan { id: string; bankName: string; initialCapital: number; remainingCapital: number; monthlyPayment: number; interestRate: number; }
 
 export interface CalendarEvent {
   id: string;
@@ -37,6 +40,8 @@ interface WealthState {
 
   business: {
     tresorerie: number;
+    comptesBancaires: number;
+    caisse: number;
     fluxIn: number;
     fluxOut: number;
     stock: number;
@@ -45,6 +50,8 @@ interface WealthState {
     chiffreAffairesHT: number;
     factures: Facture[];
     employes: Employe[];
+    stockItems: StockItem[];
+    loans: BusinessLoan[];
   };
 
   calendarEvents: CalendarEvent[];
@@ -176,6 +183,8 @@ export const useWealthStore = create<WealthState>((set) => ({
 
   business: {
     tresorerie: 780000,
+    comptesBancaires: 750000,
+    caisse: 30000,
     fluxIn: 124000,
     fluxOut: 145000,
     stock: 1200000,
@@ -186,13 +195,45 @@ export const useWealthStore = create<WealthState>((set) => ({
       {
         id: 'f-1',
         type: 'OUT',
+        category: 'Achat Stock',
         amountHT: 50000,
         tva: 10000,
-        date: new Date().toLocaleDateString('fr-FR'),
-        client: 'Matériel Informatique (Apple, Dell)'
+        date: '2026-04-10',
+        client: 'Apple Distribution'
+      },
+      {
+        id: 'f-2',
+        type: 'IN',
+        category: 'Prestations',
+        amountHT: 120000,
+        tva: 24000,
+        date: '2026-04-15',
+        client: 'Client A'
+      },
+      {
+        id: 'f-3',
+        type: 'OUT',
+        category: 'Salaires',
+        amountHT: 45000,
+        tva: 0,
+        date: '2026-04-28',
+        client: 'Masse Salariale'
       }
     ],
-    employes: []
+    employes: [
+      { id: 'emp-1', name: 'Karim Tazi', role: 'Directeur Général', salaryNet: 30000, costGlobal: 36327 },
+      { id: 'emp-2', name: 'Salma Benali', role: 'CTO', salaryNet: 25000, costGlobal: 30272.5 },
+      { id: 'emp-3', name: 'Amine Lahlou', role: 'Lead Developer', salaryNet: 18000, costGlobal: 21796.2 }
+    ],
+    stockItems: [
+      { id: 'st-1', name: 'Serveurs Dell PowerEdge', qty: 10, unitPrice: 50000 },
+      { id: 'st-2', name: 'MacBook Pro M3', qty: 20, unitPrice: 25000 },
+      { id: 'st-3', name: 'Écrans 4K LG', qty: 40, unitPrice: 5000 }
+    ],
+    loans: [
+      { id: 'l-1', bankName: 'BMCE - Prêt Équipement', initialCapital: 500000, remainingCapital: 200000, monthlyPayment: 12500, interestRate: 4.5 },
+      { id: 'l-2', bankName: 'Crédit du Maroc - Leasing Auto', initialCapital: 250000, remainingCapital: 120000, monthlyPayment: 5200, interestRate: 5.2 }
+    ]
   },
 
   calendarEvents: [],
@@ -212,7 +253,7 @@ export const useWealthStore = create<WealthState>((set) => ({
       immobilier: 0, bourse: 0, crypto: 0, cash: 0, or: 0, epargne: 0, listeActifs: [], revenuMensuel: 0, transactions: [], plans: []
     },
     business: {
-      tresorerie: 0, fluxIn: 0, fluxOut: 0, stock: 0, dettes: 0, resultatComptable: 0, chiffreAffairesHT: 0, factures: [], employes: []
+      tresorerie: 0, comptesBancaires: 0, caisse: 0, fluxIn: 0, fluxOut: 0, stock: 0, dettes: 0, resultatComptable: 0, chiffreAffairesHT: 0, factures: [], employes: [], stockItems: [], loans: []
     },
     calendarEvents: []
   }))

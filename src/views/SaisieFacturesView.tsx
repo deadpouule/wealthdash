@@ -1,313 +1,304 @@
-import { useState, useRef } from 'react';
-import { useWealthStore } from '../store/useWealthStore';
-import { ArrowLeft, Plus, ScanLine, FileText, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { ViewType } from '../components/Sidebar';
-import { WealthEngine } from '../lib/WealthEngine';
-import { GoogleGenAI, Type } from '@google/genai';
+import { useWealthStore } from '../store/useWealthStore';
+import { motion, AnimatePresence } from 'motion/react';
+import { CheckCircle2, Circle, TrendingUp, TrendingDown, Plus, Filter, Search, ArrowLeft } from 'lucide-react';
+import { cn } from '../lib/utils';
 
-interface Props {
-  onNavigate: (v: ViewType) => void;
-}
+export default function BusinessFluxView({ onNavigate }: { onNavigate: (v: ViewType) => void }) {
+  const business = useWealthStore((state) => state.business);
+  const updateBusiness = useWealthStore((state) => state.updateBusiness);
 
-export default function SaisieFacturesView({ onNavigate }: Props) {
-  const business = useWealthStore(state => state.business);
-  const updateBusiness = useWealthStore(state => state.updateBusiness);
-  const facts = business.factures || [];
+  const CATEGORIES = ['Prestations', 'Ventes', 'Salaires', 'Achat Stock', 'Rénovation / Travaux', 'Loyer', 'Logiciels', 'Divers'];
 
-  const [client, setClient] = useState('');
-  const [amountHT, setAmountHT] = useState('');
-  const [tvaRate, setTvaRate] = useState('20');
-  const [type, setType] = useState<'IN'|'OUT'>('IN');
-  const [isScanning, setIsScanning] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Filters
+  const [filterType, setFilterType] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
+  const [filterMonth, setFilterMonth] = useState<string>('ALL');
 
-  const performAdd = (c: string, aHT: number, t: 'IN'|'OUT', rateVal: number) => {
-    const valHT = aHT;
-    const tvaVal = valHT * (rateVal / 100);
+  // Multi-selection (for potential mass actions in the future, currently visual)
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Form State
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    type: 'OUT' as 'IN' | 'OUT',
+    category: 'Achat Stock',
+    amountHT: '',
+    tva: '',
+    date: new Date().toISOString().split('T')[0],
+    client: ''
+  });
+
+  // Extract unique months for filter
+  const availableMonths = useMemo(() => {
+    const months = new Set(business.factures.map(f => f.date.substring(0, 7))); // YYYY-MM
+    return Array.from(months).sort().reverse();
+  }, [business.factures]);
+
+  // Filtered transactions
+  const filteredFactures = useMemo(() => {
+    return business.factures.filter(f => {
+      if (filterType !== 'ALL' && f.type !== filterType) return false;
+      if (filterMonth !== 'ALL' && !f.date.startsWith(filterMonth)) return false;
+      return true;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [business.factures, filterType, filterMonth]);
+
+  const stats = useMemo(() => {
+    const inTotal = filteredFactures.filter(f => f.type === 'IN').reduce((acc, curr) => acc + curr.amountHT, 0);
+    const outTotal = filteredFactures.filter(f => f.type === 'OUT').reduce((acc, curr) => acc + curr.amountHT, 0);
+    return { inTotal, outTotal, balance: inTotal - outTotal };
+  }, [filteredFactures]);
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.client || !formData.amountHT) return;
+
     const newFacture = {
       id: Math.random().toString(),
-      type: t,
-      amountHT: valHT,
-      tva: tvaVal,
-      client: c,
-      date: new Date().toLocaleDateString('fr-FR')
+      type: formData.type,
+      category: formData.category,
+      amountHT: Number(formData.amountHT),
+      tva: Number(formData.tva) || 0,
+      date: formData.date,
+      client: formData.client
     };
 
-    const updatedFactures = [...facts, newFacture];
-    
-    // Simulate real-time impact on Business metrics
-    const impact = t === 'IN' ? valHT + tvaVal : -(valHT + tvaVal); // TTC impacts Tresorerie
-    const newCA = t === 'IN' ? business.chiffreAffairesHT + valHT : business.chiffreAffairesHT;
-    const newRes = t === 'IN' ? business.resultatComptable + valHT : business.resultatComptable - valHT;
-
     updateBusiness({
-      factures: updatedFactures,
-      tresorerie: business.tresorerie + impact,
-      chiffreAffairesHT: newCA,
-      resultatComptable: newRes,
-      fluxIn: t === 'IN' ? business.fluxIn + impact : business.fluxIn,
-      fluxOut: t === 'OUT' ? business.fluxOut + Math.abs(impact) : business.fluxOut
+       factures: [...business.factures, newFacture]
     });
-  };
-
-  const handleAdd = (e: any) => {
-    e.preventDefault();
-    if (!client || !amountHT) return;
-    performAdd(client, Number(amountHT), type, Number(tvaRate));
-    setClient('');
-    setAmountHT('');
-    setTvaRate('20');
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsScanning(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const base64String = (event.target?.result as string).split(',')[1];
-          const mimeType = file.type;
-
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-          
-          const promptString = `Analyze this invoice or receipt. Extract the following information and return it strictly as JSON.
-If it's a receipt for a purchase made by the company (e.g. food, equipment, software like Apple), classify it as OUT. If it's an invoice issued BY the company to a client, classify it as IN. Most uploaded receipts are OUT.
-Provide:
-1. clientName: The name of the merchant, vendor, or client.
-2. amountHT: The amount without taxes (HT). If only TTC is visible, estimate HT by determining the likely tax rate.
-3. tvaRate: The likely VAT rate applied (extract 20, 14, 10, 7, or 0 based on context or explicit text on the receipt). Default to 20 if unsure.
-4. type: "IN" or "OUT".`;
-
-          const response = await ai.models.generateContent({
-            model: "gemini-3.1-pro-preview",
-            contents: {
-              parts: [
-                {
-                  inlineData: {
-                    mimeType,
-                    data: base64String,
-                  },
-                },
-                {
-                  text: promptString,
-                },
-              ]
-            },
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                  clientName: { type: Type.STRING },
-                  amountHT: { type: Type.NUMBER },
-                  tvaRate: { type: Type.NUMBER },
-                  type: { type: Type.STRING, description: "Must be exactly IN or OUT" }
-                },
-                required: ["clientName", "amountHT", "type", "tvaRate"]
-              }
-            }
-          });
-
-          const responseText = response.text;
-          if (responseText) {
-            const data = JSON.parse(responseText.trim());
-            
-            const detectedRate = data.tvaRate ? Number(data.tvaRate) : 20;
-
-            setClient(data.clientName || 'Inconnu');
-            setAmountHT(data.amountHT?.toString() || '0');
-            setTvaRate(detectedRate.toString());
-            setType(data.type === 'IN' ? 'IN' : 'OUT');
-            
-            // Auto add
-            performAdd(data.clientName || 'Inconnu', Number(data.amountHT || 0), data.type === 'IN' ? 'IN' : 'OUT', detectedRate);
-            
-            setClient('');
-            setAmountHT('');
-            setTvaRate('20');
-          }
-        } catch (err) {
-          console.error("Failed to parse invoice", err);
-          alert("Erreur lors de l'analyse de l'image.");
-        } finally {
-          setIsScanning(false);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      console.error(err);
-      setIsScanning(false);
+    
+    // Auto-update global fluxes
+    if (formData.type === 'IN') {
+       updateBusiness({ fluxIn: business.fluxIn + Number(formData.amountHT) });
+    } else {
+       updateBusiness({ fluxOut: business.fluxOut + Number(formData.amountHT) });
     }
+
+    setShowForm(false);
+    setFormData({ type: 'OUT', category: 'Achat Stock', amountHT: '', tva: '', date: new Date().toISOString().split('T')[0], client: '' });
   };
 
-  const simulateScan = () => {
-    fileInputRef.current?.click();
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
-
-  const handleDelete = (id: string) => {
-    const fact = facts.find(f => f.id === id);
-    if (!fact) return;
-    
-    const impact = fact.type === 'IN' ? fact.amountHT + fact.tva : -(fact.amountHT + fact.tva);
-    const newCA = fact.type === 'IN' ? business.chiffreAffairesHT - fact.amountHT : business.chiffreAffairesHT;
-    const newRes = fact.type === 'IN' ? business.resultatComptable - fact.amountHT : business.resultatComptable + fact.amountHT;
-
-    updateBusiness({
-      factures: facts.filter(f => f.id !== id),
-      tresorerie: business.tresorerie - impact,
-      chiffreAffairesHT: newCA,
-      resultatComptable: newRes,
-      fluxIn: fact.type === 'IN' ? business.fluxIn - impact : business.fluxIn,
-      fluxOut: fact.type === 'OUT' ? business.fluxOut - Math.abs(impact) : business.fluxOut
-    });
-  };
-
-  const handleEdit = (id: string) => {
-    // Mode Édition logic stub prepared for Zustand communication
-    console.log("Trigger edit facture for id:", id);
-  };
-
-  const tvaCollectee = facts.filter(f => f.type === 'IN').reduce((acc, f) => acc + f.tva, 0);
-  const tvaDeductible = facts.filter(f => f.type === 'OUT').reduce((acc, f) => acc + f.tva, 0);
-  const tvaEstimee = tvaCollectee - tvaDeductible;
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-1000 px-6 md:px-10 pt-8 pb-20 w-full max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <button 
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-2 text-space-gray hover:text-white transition-colors text-xs uppercase tracking-widest font-bold mb-6"
-          >
-            <ArrowLeft size={14} /> Retour
-          </button>
-          <h2 className="text-3xl md:text-[40px] font-extralight tracking-tight text-white leading-none">
-            Saisie & Factures
-          </h2>
-        </div>
-        <input 
-          type="file" 
-          accept="image/*" 
-          ref={fileInputRef} 
-          onChange={handleFileChange} 
-          className="hidden" 
-        />
+    <div className="px-6 md:px-10 space-y-12 animate-in fade-in duration-1000 pb-20 w-full max-w-7xl mx-auto pt-8">
+      
+      {/* Header */}
+      <div>
         <button 
-          onClick={simulateScan}
-          disabled={isScanning}
-          className="flex items-center gap-2 px-6 py-3 bg-neon-mint text-midnight rounded-full text-xs font-bold uppercase tracking-widest hover:brightness-110 shadow-[0_0_15px_rgba(52,199,89,0.3)] transition-all disabled:opacity-50"
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center gap-2 text-space-gray hover:text-white transition-colors text-xs uppercase tracking-widest font-bold mb-8"
         >
-           {isScanning ? <span className="animate-pulse">Analyse AI...</span> : <><ScanLine size={16} /> Scanner (IA)</>}
+          <ArrowLeft size={14} /> Retour
         </button>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-2">
+           <div>
+             <h2 className="text-4xl md:text-5xl font-extralight tracking-tight text-white mb-2">
+               Flux Financiers In/Out
+             </h2>
+             <p className="text-space-gray tracking-wide">
+               Historique et pointage comptable détaillé
+             </p>
+           </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Form */}
-        <div className="lg:col-span-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[24px] p-6 h-fit">
-           <h3 className="text-white font-medium mb-6 tracking-wide">Ajouter manuellement</h3>
-           <form onSubmit={handleAdd} className="space-y-5">
-             <div>
-                <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-light">Client / Fournisseur</label>
-                <input required value={client} onChange={e=>setClient(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#34C759]/50 transition-colors" placeholder="Nom de l'entité" />
-             </div>
-             <div className="grid grid-cols-2 gap-4">
-               <div>
-                  <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-light">Montant HT (MAD)</label>
-                  <input required type="number" value={amountHT} onChange={e=>setAmountHT(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#34C759]/50 transition-colors" placeholder="0" />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         <div className="glass-card p-6 rounded-3xl flex flex-col justify-center border-l-4 border-l-[#34C759]/50">
+            <div className="flex items-center gap-3 mb-2">
+               <div className="w-8 h-8 rounded-full bg-[#34C759]/10 flex items-center justify-center text-[#34C759]">
+                  <TrendingUp size={16} />
                </div>
-               <div>
-                  <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-light">TVA (%)</label>
-                  <select value={tvaRate} onChange={e=>setTvaRate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#34C759]/50 appearance-none transition-colors">
-                     <option value="20" className="bg-midnight">20% (Standard)</option>
-                     <option value="14" className="bg-midnight">14% (Transport, Énergie)</option>
-                     <option value="10" className="bg-midnight">10% (Restauration, Banque)</option>
-                     <option value="7" className="bg-midnight">7% (Eau, Fournitures)</option>
-                     <option value="0" className="bg-midnight">0% (Exonéré)</option>
-                  </select>
+               <span className="text-sm font-medium text-space-gray">Total Entrant (Période)</span>
+            </div>
+            <p className="text-3xl font-light text-white">{stats.inTotal.toLocaleString('fr-FR')} <span className="text-sm text-space-gray">HT</span></p>
+         </div>
+         <div className="glass-card p-6 rounded-3xl flex flex-col justify-center border-l-4 border-l-red-500/50">
+            <div className="flex items-center gap-3 mb-2">
+               <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
+                  <TrendingDown size={16} />
                </div>
-             </div>
-             <div>
-                <label className="text-space-gray text-[10px] uppercase tracking-widest mb-2 block font-light">Type de Flux</label>
-                <div className="flex bg-white/5 p-1 rounded-xl">
-                  <button type="button" onClick={()=>setType('IN')} className={`flex-1 py-2 text-[11px] font-bold tracking-widest uppercase rounded-lg transition-colors ${type==='IN'?'bg-[#34C759] text-midnight':'text-space-gray'}`}>ENCAISSEMENT</button>
-                  <button type="button" onClick={()=>setType('OUT')} className={`flex-1 py-2 text-[11px] font-bold tracking-widest uppercase rounded-lg transition-colors ${type==='OUT'?'bg-white/10 text-white':'text-space-gray'}`}>DÉCAISSEMENT</button>
-                </div>
-             </div>
-             <button type="submit" className="w-full py-4 bg-white text-midnight font-bold flex items-center justify-center gap-2 rounded-xl mt-4 hover:bg-neutral-200 transition-colors active:scale-[0.98]">
-               <Plus size={16} /> Enregistrer
-             </button>
-           </form>
-        </div>
+               <span className="text-sm font-medium text-space-gray">Total Sortant (Période)</span>
+            </div>
+            <p className="text-3xl font-light text-white">{stats.outTotal.toLocaleString('fr-FR')} <span className="text-sm text-space-gray">HT</span></p>
+         </div>
+         <div className="glass-card p-6 rounded-3xl flex flex-col justify-center bg-white/[0.02]">
+             <div className="flex items-center gap-3 mb-2">
+               <span className="text-sm font-medium text-space-gray">Balance Nette</span>
+            </div>
+            <p className={cn("text-4xl font-bold", stats.balance >= 0 ? "text-[#34C759]" : "text-red-500")}>
+               {stats.balance > 0 ? '+' : ''}{stats.balance.toLocaleString('fr-FR')} <span className="text-sm font-light uppercase tracking-widest opacity-60">HT</span>
+            </p>
+         </div>
+      </div>
 
-        {/* TVA Summary & History */}
-        <div className="lg:col-span-2 space-y-6">
-           {/* TVA Synthesis Grid */}
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl transition-all duration-300 hover:bg-white/10">
-                 <p className="text-[10px] uppercase tracking-widest text-space-gray font-bold mb-1">TVA Collectée</p>
-                 <p className="text-xl font-bold text-white">{Number(tvaCollectee).toLocaleString('fr-FR')} <span className="text-xs text-space-gray font-light">MAD</span></p>
-              </div>
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl transition-all duration-300 hover:bg-white/10">
-                 <p className="text-[10px] uppercase tracking-widest text-space-gray font-bold mb-1">TVA Déductible</p>
-                 <p className="text-xl font-bold text-white">{Number(tvaDeductible).toLocaleString('fr-FR')} <span className="text-xs text-space-gray font-light">MAD</span></p>
-              </div>
-              <div className={`p-5 rounded-2xl border backdrop-blur-xl transition-all duration-300 ${tvaEstimee > 0 ? 'bg-amber-500/10 border-amber-500/20 shadow-[inset_0_1px_4px_rgba(245,158,11,0.05)]' : 'bg-[#34C759]/10 border-[#34C759]/20 shadow-[inset_0_1px_4px_rgba(52,199,89,0.05)]'}`}>
-                 <p className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${tvaEstimee > 0 ? 'text-amber-500' : 'text-[#34C759]'}`}>
-                   {tvaEstimee > 0 ? 'TVA à Décaisser (Est.)' : 'Crédit de TVA (Est.)'}
-                 </p>
-                 <p className={`text-xl font-bold ${tvaEstimee > 0 ? 'text-amber-500' : 'text-[#34C759]'}`}>
-                   {Math.abs(Number(tvaEstimee)).toLocaleString('fr-FR')} <span className="text-xs opacity-70 font-light">MAD</span>
-                 </p>
-              </div>
-           </div>
-
-           <div className="flex items-center justify-between pt-4">
-             <h3 className="text-white font-medium tracking-wide">Historique Récent</h3>
-             <span className="text-space-gray text-sm">{facts.length} documents</span>
-           </div>
-           
-           <div className="space-y-3">
-             {facts.length === 0 ? (
-               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[20px] p-10 flex flex-col items-center justify-center text-center">
-                 <FileText className="text-space-gray mb-4" size={40} strokeWidth={1} />
-                 <p className="text-space-gray font-light">Aucune facture enregistrée pour le moment.</p>
+      {/* Main List Area */}
+      <div className="glass-card rounded-[32px] overflow-hidden flex flex-col min-h-[500px]">
+         
+         {/* Toolbar */}
+         <div className="p-6 md:p-8 border-b border-white/5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-black/20">
+            <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+               <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl">
+                  <button onClick={() => setFilterType('ALL')} className={cn("px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterType === 'ALL' ? 'bg-white/10 text-white' : 'text-space-gray hover:text-white')}>Tout</button>
+                  <button onClick={() => setFilterType('IN')} className={cn("px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterType === 'IN' ? 'bg-[#34C759]/20 text-[#34C759]' : 'text-space-gray hover:text-white')}>Entrées</button>
+                  <button onClick={() => setFilterType('OUT')} className={cn("px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all", filterType === 'OUT' ? 'bg-red-500/20 text-red-500' : 'text-space-gray hover:text-white')}>Sorties</button>
                </div>
-             ) : (
-               [...facts].reverse().map((f) => (
-                 <div key={f.id} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[16px] p-5 flex items-center gap-4 transition-all duration-300 hover:bg-white/10 hover:border-[#34C759]/50 active:scale-[0.98]">
-                   <div className="flex items-center gap-4 flex-1">
-                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${f.type === 'IN' ? 'bg-[#34C759]/10 text-[#34C759]' : 'bg-red-500/10 text-red-500'}`}>
-                        {f.type === 'IN' ? <Plus size={16} /> : <span className="text-lg leading-none mb-1">-</span>}
+               
+               <select 
+                  value={filterMonth} 
+                  onChange={(e) => setFilterMonth(e.target.value)}
+                  className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none cursor-pointer"
+               >
+                  <option value="ALL">Tous les mois</option>
+                  {availableMonths.map(m => (
+                     <option key={m} value={m}>{m}</option>
+                  ))}
+               </select>
+            </div>
+
+            <button onClick={() => setShowForm(true)} className="w-full md:w-auto py-2.5 px-6 bg-[#34C759] text-midnight font-bold rounded-xl hover:bg-[#34C759]/90 transition-all flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(52,199,89,0.2)]">
+               <Plus size={16} /> Nouveau Flux
+            </button>
+         </div>
+
+         {/* Desktop Table Header */}
+         <div className="hidden md:grid grid-cols-12 gap-4 px-10 py-4 border-b border-white/5 text-xs font-bold text-space-gray uppercase tracking-widest bg-black/10">
+            <div className="col-span-1"></div>
+            <div className="col-span-2">Date</div>
+            <div className="col-span-2">Catégorie</div>
+            <div className="col-span-3">Libellé / Client</div>
+            <div className="col-span-2 text-right">Montant HT</div>
+            <div className="col-span-2 text-right">Montant TTC</div>
+         </div>
+
+         {/* Transactions List */}
+         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-2">
+            <AnimatePresence>
+               {filteredFactures.length === 0 ? (
+                  <div className="py-20 text-center text-space-gray font-light">Aucune transaction trouvée.</div>
+               ) : (
+                  filteredFactures.map(tx => (
+                     <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        key={tx.id}
+                        className="grid grid-cols-1 md:grid-cols-12 gap-y-2 md:gap-y-0 gap-x-4 px-4 py-4 md:items-center bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] hover:border-white/10 transition-all group cursor-pointer"
+                        onClick={() => toggleSelection(tx.id)}
+                     >
+                        <div className="md:col-span-1 flex items-center mb-2 md:mb-0">
+                           {selectedIds.includes(tx.id) 
+                             ? <CheckCircle2 size={20} className={tx.type === 'IN' ? 'text-[#34C759]' : 'text-red-500'} /> 
+                             : <Circle size={20} className="text-space-gray opacity-30 group-hover:opacity-100 transition-opacity" />
+                           }
+                        </div>
+                        <div className="md:col-span-2 flex justify-between md:block">
+                           <span className="md:hidden text-xs text-space-gray uppercase">Date</span>
+                           <span className="text-sm font-medium text-white/80">{tx.date}</span>
+                        </div>
+                        <div className="md:col-span-2 flex justify-between md:block">
+                           <span className="md:hidden text-xs text-space-gray uppercase">Catégorie</span>
+                           <span className={cn(
+                              "text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full font-bold inline-block",
+                              tx.type === 'IN' ? 'bg-[#34C759]/10 text-[#34C759] border border-[#34C759]/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                           )}>
+                              {tx.category}
+                           </span>
+                        </div>
+                        <div className="md:col-span-3 flex justify-between md:block">
+                           <span className="md:hidden text-xs text-space-gray uppercase">Libellé</span>
+                           <span className="text-base md:text-sm text-white font-medium">{tx.client}</span>
+                        </div>
+                        <div className="md:col-span-2 flex justify-between md:block md:text-right">
+                           <span className="md:hidden text-xs text-space-gray uppercase">HT</span>
+                           <span className="text-sm text-white/90 font-medium">{tx.amountHT.toLocaleString('fr-FR')}</span>
+                        </div>
+                        <div className="md:col-span-2 flex justify-between md:block md:text-right">
+                           <span className="md:hidden text-xs text-space-gray uppercase">TTC</span>
+                           <span className="text-sm text-white font-bold">{(tx.amountHT + tx.tva).toLocaleString('fr-FR')} <span className="text-[10px] text-space-gray font-light ml-1 line-clamp-1 truncate">MAD ({tx.tva > 0 ? '+TVA' : '0 TVA'})</span></span>
+                        </div>
+                     </motion.div>
+                  ))
+               )}
+            </AnimatePresence>
+         </div>
+      </div>
+
+      {/* Add Form Modal */}
+      <AnimatePresence>
+         {showForm && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+               <motion.div 
+                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                 onClick={() => setShowForm(false)}
+               />
+               <motion.div 
+                 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}
+                 className="bg-[#0A0A0B] border border-white/10 p-8 rounded-[32px] w-full max-w-lg relative z-10 shadow-2xl"
+               >
+                  <h3 className="text-2xl text-white font-light mb-6 text-center">Nouveau Flux</h3>
+                  <form onSubmit={handleSave} className="space-y-4">
+                     
+                     <div className="grid grid-cols-2 gap-4">
+                        <div>
+                           <label className="text-xs text-space-gray uppercase tracking-widest ml-2 mb-1 block">Type</label>
+                           <select value={formData.type} onChange={e=>setFormData({...formData, type: e.target.value as 'IN'|'OUT'})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none cursor-pointer">
+                              <option value="IN">Entrée (Recette)</option>
+                              <option value="OUT">Sortie (Dépense)</option>
+                           </select>
+                        </div>
+                        <div>
+                           <label className="text-xs text-space-gray uppercase tracking-widest ml-2 mb-1 block">Date</label>
+                           <input required type="date" value={formData.date} onChange={e=>setFormData({...formData, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#34C759]/50 transition-colors" style={{colorScheme: 'dark'}} />
+                        </div>
                      </div>
+
                      <div>
-                       <p className="text-white font-light text-sm md:text-base tracking-wide">{f.client}</p>
-                       <p className="text-space-gray text-[10px] uppercase font-bold tracking-widest mt-0.5">{f.date} &bull; TVA : {f.tva.toLocaleString()} MAD</p>
+                        <label className="text-xs text-space-gray uppercase tracking-widest ml-2 mb-1 block">Catégorie</label>
+                        <select value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none cursor-pointer">
+                           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
                      </div>
-                   </div>
-                   <div className="text-right shrink-0">
-                     <p className={`font-semibold md:text-lg ${f.type === 'IN' ? 'text-[#34C759]' : 'text-white'}`}>
-                       {f.type === 'IN' ? '+' : '-'}{(f.amountHT + f.tva).toLocaleString('fr-FR')} MAD
-                     </p>
-                     <p className="text-space-gray text-[10px] uppercase tracking-widest mt-0.5">TTC</p>
-                   </div>
-                   <div className="flex items-center gap-3 ml-4 shrink-0 transition-opacity">
-                     <button onClick={() => handleEdit(f.id)} className="text-gray-500 hover:text-[#34C759] transition-all duration-300 active:scale-[0.98]">
-                       <Pencil size={18} strokeWidth={1.5} />
-                     </button>
-                     <button onClick={() => handleDelete(f.id)} className="text-gray-500 hover:text-red-500 transition-all duration-300 active:scale-[0.98]">
-                       <Trash2 size={18} strokeWidth={1.5} />
-                     </button>
-                   </div>
-                 </div>
-               ))
-             )}
-           </div>
-        </div>
-      </div>
+
+                     <div>
+                        <label className="text-xs text-space-gray uppercase tracking-widest ml-2 mb-1 block">Libellé / Client</label>
+                        <input required value={formData.client} onChange={e=>setFormData({...formData, client: e.target.value})} placeholder="ex: Client A, Amazon AWS..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none font-light focus:border-[#34C759]/50 transition-colors" />
+                     </div>
+                     
+                     <div className="grid grid-cols-2 gap-4">
+                        <div>
+                           <label className="text-xs text-space-gray uppercase tracking-widest ml-2 mb-1 block">Montant HT</label>
+                           <input required type="number" step="0.01" value={formData.amountHT} onChange={e=>setFormData({...formData, amountHT: e.target.value})} placeholder="0.00" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none font-light focus:border-[#34C759]/50 transition-colors" />
+                        </div>
+                        <div>
+                           <label className="text-xs text-space-gray uppercase tracking-widest ml-2 mb-1 block">TVA (MAD)</label>
+                           <input type="number" step="0.01" value={formData.tva} onChange={e=>setFormData({...formData, tva: e.target.value})} placeholder="0.00" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none font-light focus:border-[#34C759]/50 transition-colors" />
+                        </div>
+                     </div>
+
+                     <div className="pt-4 border-t border-white/5 mt-4 flex justify-between items-center text-sm">
+                        <span className="text-space-gray">Total TTC Estimé:</span>
+                        <span className="text-white font-bold text-lg">
+                           {((Number(formData.amountHT)||0) + (Number(formData.tva)||0)).toLocaleString('fr-FR')} MAD
+                        </span>
+                     </div>
+
+                     <div className="flex gap-4 mt-8 pt-4">
+                        <button type="button" onClick={() => setShowForm(false)} className="flex-1 bg-white/5 border border-white/10 text-white font-bold py-3 rounded-xl hover:bg-white/10 transition-all">Annuler</button>
+                        <button type="submit" className="flex-1 bg-[#34C759] text-midnight font-bold py-3 rounded-xl hover:bg-[#34C759]/90 transition-all shadow-[0_0_15px_rgba(52,199,89,0.3)]">Enregistrer Flux</button>
+                     </div>
+                  </form>
+               </motion.div>
+            </div>
+         )}
+      </AnimatePresence>
+
     </div>
   );
 }

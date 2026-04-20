@@ -2,6 +2,7 @@ import { LayoutDashboard, ArrowLeftRight, Receipt, MessageSquare, FileScan, User
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { useState } from 'react';
+import Logo from './Logo';
 
 export type ViewType = 'dashboard' | 'cashflow' | 'taxes' | 'community' | 'crypto-detail' | 'immobilier' | 'cash' | 'epargne' | 'bourse' | 'or' | 'factures' | 'rh' | 'fiscalite' | 'business-tresorerie' | 'business-flux' | 'business-stock' | 'business-rh' | 'business-dettes' | 'business-fiscal';
 
@@ -34,8 +35,14 @@ export default function Sidebar({ currentView, onNavigate, mode = 'Particulier' 
     <aside className="fixed bottom-0 md:top-0 left-0 w-full h-[80px] md:h-screen md:w-[72px] subtle-outline border-t border-x-0 md:border-y-0 md:border-l-0 flex flex-row md:flex-col items-center justify-between md:justify-start z-50 bg-[#0A0A0B]/90 backdrop-blur-3xl pb-safe">
       
       {/* Desktop Logo */}
-      <div className="hidden md:flex w-8 h-8 rounded-full bg-white items-center justify-center mt-8 mb-10 transition-transform active:scale-95 cursor-pointer">
-        <div className="w-4 h-4 rounded-sm bg-midnight" />
+      <div 
+        onClick={() => onNavigate('dashboard')}
+        className="hidden md:flex flex-col items-center justify-center mt-8 mb-10 transition-transform active:scale-95 cursor-pointer group"
+      >
+        <Logo size={40} className="mb-2 group-hover:scale-105 transition-transform duration-500" />
+        <span className="text-white font-bold text-[11px] tracking-[0.3em] uppercase">
+          noria
+        </span>
       </div>
       
       <nav className="flex-1 flex flex-row md:flex-col items-center justify-around md:justify-center px-2 md:px-0 gap-0 md:gap-10 w-full h-[80px] md:h-auto mx-auto max-w-sm md:max-w-none relative">

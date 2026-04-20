@@ -21,14 +21,27 @@ import BusinessOnboardingView from './views/BusinessOnboardingView';
 import SaisieFacturesView from './views/SaisieFacturesView';
 import GestionRHView from './views/GestionRHView';
 import GenericDetailView from './views/GenericDetailView';
+import BusinessTresorerieView from './views/BusinessTresorerieView';
+import BusinessStockView from './views/BusinessStockView';
+import BusinessDettesView from './views/BusinessDettesView';
 import FiscaliteProView from './views/FiscaliteProView';
 import { useWealthStore } from './store/useWealthStore';
+import Logo from './components/Logo';
 
 export default function App() {
+  const [isBooting, setIsBooting] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [showOnboarding, setShowOnboarding] = useState(false);
   
   const mode = useWealthStore(state => state.mode);
+
+  useEffect(() => {
+    // Initial luxury boot-up
+    const timer = setTimeout(() => {
+      setIsBooting(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Check if user has already onboarded for the current mode
@@ -113,20 +126,55 @@ export default function App() {
       case 'business-fiscal':
         return <FiscaliteProView onNavigate={setCurrentView} />;
       case 'business-tresorerie':
-        return <GenericDetailView title="Détails Trésorerie (Pro)" onNavigate={setCurrentView} actionLabel="Ajouter un Compte" />;
+        return <BusinessTresorerieView onNavigate={setCurrentView} />;
       case 'business-flux':
-        return <GenericDetailView title="Détails Flux" onNavigate={setCurrentView} actionLabel="Catégoriser Transaction" />;
+        return <SaisieFacturesView onNavigate={setCurrentView} />;
       case 'business-stock':
-        return <GenericDetailView title="Stock & Matériel" onNavigate={setCurrentView} actionLabel="Ajouter Matériel" />;
+        return <BusinessStockView onNavigate={setCurrentView} />;
       case 'business-rh':
         return <GenericDetailView title="Détails Salaires & RH" onNavigate={setCurrentView} actionLabel="Modifier Paie" />;
       case 'business-dettes':
-        return <GenericDetailView title="Détails Dettes & Crédits" onNavigate={setCurrentView} actionLabel="Ajouter Emprunt" />;
+        return <BusinessDettesView onNavigate={setCurrentView} />;
       default:
         // By default or for investments (if stub)
         return <DashboardView onNavigate={setCurrentView} mode={mode} />;
     }
   };
+
+  if (isBooting) {
+    return (
+      <div className="min-h-screen bg-midnight flex flex-col items-center justify-center font-sans selection:bg-neon-mint/30">
+        <motion.div
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1, rotate: 360 }}
+           transition={{ 
+             opacity: { duration: 0.8 }, 
+             scale: { duration: 0.8 },
+             rotate: { duration: 10, repeat: Infinity, ease: "linear" } 
+           }}
+           className="relative"
+        >
+          {/* We add an extra glow wrapper for the pulse effect */}
+          <motion.div 
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-full blur-[30px] bg-[#34C759]/20"
+          />
+          <Logo size={80} />
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.8 }}
+          className="mt-8 text-center"
+        >
+          <h1 className="text-white font-bold text-lg tracking-[0.4em] uppercase">Noria</h1>
+          <p className="text-space-gray text-[10px] tracking-widest uppercase mt-2">Initialisation du noyau</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (showOnboarding) {
     if (mode === 'Business') {
