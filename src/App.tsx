@@ -25,6 +25,7 @@ import BusinessTresorerieView from './views/BusinessTresorerieView';
 import BusinessStockView from './views/BusinessStockView';
 import BusinessDettesView from './views/BusinessDettesView';
 import FiscaliteProView from './views/FiscaliteProView';
+import SimulationView from './views/SimulationView';
 import { useWealthStore } from './store/useWealthStore';
 import Logo from './components/Logo';
 
@@ -135,6 +136,8 @@ export default function App() {
         return <GenericDetailView title="Détails Salaires & RH" onNavigate={setCurrentView} actionLabel="Modifier Paie" />;
       case 'business-dettes':
         return <BusinessDettesView onNavigate={setCurrentView} />;
+      case 'simulations':
+        return <SimulationView onNavigate={setCurrentView} />;
       default:
         // By default or for investments (if stub)
         return <DashboardView onNavigate={setCurrentView} mode={mode} />;

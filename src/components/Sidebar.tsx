@@ -1,14 +1,16 @@
-import { LayoutDashboard, ArrowLeftRight, Receipt, MessageSquare, FileScan, Users, Percent, Globe, Settings2, LogOut } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Receipt, MessageSquare, FileScan, Users, Percent, Globe, Settings2, LogOut, Compass } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import Logo from './Logo';
+import { useWealthStore } from '../store/useWealthStore';
 
-export type ViewType = 'dashboard' | 'cashflow' | 'taxes' | 'community' | 'crypto-detail' | 'immobilier' | 'cash' | 'epargne' | 'bourse' | 'or' | 'factures' | 'rh' | 'fiscalite' | 'business-tresorerie' | 'business-flux' | 'business-stock' | 'business-rh' | 'business-dettes' | 'business-fiscal';
+export type ViewType = 'dashboard' | 'cashflow' | 'taxes' | 'community' | 'crypto-detail' | 'immobilier' | 'cash' | 'epargne' | 'bourse' | 'or' | 'factures' | 'rh' | 'fiscalite' | 'business-tresorerie' | 'business-flux' | 'business-stock' | 'business-rh' | 'business-dettes' | 'business-fiscal' | 'simulations';
 
 const particulierItems = [
   { id: 'dashboard' as ViewType, icon: LayoutDashboard, label: 'Dashboard' },
   { id: 'cashflow' as ViewType, icon: ArrowLeftRight, label: 'Cashflow' },
+  { id: 'simulations' as ViewType, icon: Compass, label: 'Horizon' },
   { id: 'taxes' as ViewType, icon: Receipt, label: 'Taxes' },
   { id: 'community' as ViewType, icon: MessageSquare, label: 'Communauté' },
 ];
@@ -97,7 +99,13 @@ export default function Sidebar({ currentView, onNavigate, mode = 'Particulier' 
 
       {/* Desktop Footer Actions */}
       <div 
-        onClick={() => { localStorage.clear(); window.location.reload(); }}
+        onClick={() => { 
+          useWealthStore.getState().clearData();
+          onNavigate('dashboard');
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }}
         className="hidden md:block mt-auto mb-10 p-2 text-space-gray hover:text-red-500 transition-colors cursor-pointer group relative"
       >
         <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-red-500/10 subtle-outline flex items-center justify-center border-dashed">
@@ -122,7 +130,13 @@ export default function Sidebar({ currentView, onNavigate, mode = 'Particulier' 
               <h3 className="text-white text-lg font-light tracking-tight mb-6">Paramètres Systèmes</h3>
               <div className="space-y-4">
                  <button 
-                  onClick={() => { localStorage.clear(); window.location.reload(); }}
+                  onClick={() => { 
+                    useWealthStore.getState().clearData();
+                    onNavigate('dashboard');
+                    if (typeof window !== 'undefined') {
+                      window.location.reload();
+                    }
+                  }}
                   className="flex items-center gap-4 w-full p-4 rounded-2xl bg-red-500/5 border border-red-500/20 text-red-500 font-medium active:scale-95 transition-transform"
                  >
                    <LogOut size={20} /> Réinitialiser les données (Logout)

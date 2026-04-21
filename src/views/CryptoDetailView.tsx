@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Pencil, Trash2, Plus } from 'lucide-react';
 import { ViewType } from '../components/Sidebar';
 import { useWealthStore } from '../store/useWealthStore';

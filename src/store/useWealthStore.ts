@@ -20,6 +20,18 @@ export interface CalendarEvent {
   dateStr: string; // Format YYYY-MM-DD for easy mapping
 }
 
+export interface SimulatedProject {
+  id: string;
+  type: 'Voiture' | 'Immobilier' | 'Voyage' | 'Luxe';
+  amount: number;
+  apport: number;
+  monthlySavings: number;
+  financing: 'Cash' | 'Credit';
+  creditDuration?: number;
+  creditRate?: number;
+  createdAt: string;
+}
+
 interface WealthState {
   mode: UserMode;
   toggleMode: () => void;
@@ -57,12 +69,49 @@ interface WealthState {
   calendarEvents: CalendarEvent[];
   addCalendarEvent: (event: CalendarEvent) => void;
   deleteCalendarEvent: (id: string) => void;
+  
+  simulations: SimulatedProject[];
+  addSimulation: (sim: SimulatedProject) => void;
+  removeSimulation: (id: string) => void;
 
   updateParticulier: (data: Partial<WealthState['particulier']>) => void;
   updateBusiness: (data: Partial<WealthState['business']>) => void;
   
   clearData: () => void;
 }
+
+const INITIAL_STATE = {
+  mode: 'Particulier' as UserMode,
+  particulier: {
+    immobilier: 0,
+    bourse: 0,
+    crypto: 0,
+    cash: 0,
+    or: 0,
+    epargne: 0,
+    listeActifs: [],
+    revenuMensuel: 0,
+    transactions: [],
+    plans: []
+  },
+  business: {
+    tresorerie: 0,
+    comptesBancaires: 0,
+    caisse: 0,
+    fluxIn: 0,
+    fluxOut: 0,
+    stock: 0,
+    dettes: 0,
+    resultatComptable: 0,
+    chiffreAffairesHT: 0,
+    factures: [],
+    employes: [],
+    stockItems: [],
+    loans: []
+  },
+  calendarEvents: [],
+  simulations: []
+};
 
 export const useWealthStore = create<WealthState>((set) => ({
   mode: 'Particulier',
@@ -240,6 +289,10 @@ export const useWealthStore = create<WealthState>((set) => ({
   addCalendarEvent: (event) => set((state) => ({ calendarEvents: [...state.calendarEvents, event] })),
   deleteCalendarEvent: (id) => set((state) => ({ calendarEvents: state.calendarEvents.filter(e => e.id !== id) })),
 
+  simulations: [],
+  addSimulation: (sim) => set((state) => ({ simulations: [...state.simulations, sim] })),
+  removeSimulation: (id) => set((state) => ({ simulations: state.simulations.filter(s => s.id !== id) })),
+
   updateParticulier: (data) => set((state) => ({
     particulier: { ...state.particulier, ...data }
   })),
@@ -248,14 +301,12 @@ export const useWealthStore = create<WealthState>((set) => ({
     business: { ...state.business, ...data }
   })),
 
-  clearData: () => set((state) => ({
-    particulier: {
-      immobilier: 0, bourse: 0, crypto: 0, cash: 0, or: 0, epargne: 0, listeActifs: [], revenuMensuel: 0, transactions: [], plans: []
-    },
-    business: {
-      tresorerie: 0, comptesBancaires: 0, caisse: 0, fluxIn: 0, fluxOut: 0, stock: 0, dettes: 0, resultatComptable: 0, chiffreAffairesHT: 0, factures: [], employes: [], stockItems: [], loans: []
-    },
-    calendarEvents: []
-  }))
+  clearData: () => {
+    // If using persist middleware, safely clear it
+    if (typeof (useWealthStore as any).persist?.clearStorage === 'function') {
+      (useWealthStore as any).persist.clearStorage();
+    }
+    set(() => ({ ...INITIAL_STATE }));
+  }
 }));
 

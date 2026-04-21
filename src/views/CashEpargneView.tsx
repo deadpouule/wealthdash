@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Landmark, Wallet, Plus, Pencil, Trash2 } from 'lucide-react';
 import { ViewType } from '../components/Sidebar';
 import { motion } from 'motion/react';

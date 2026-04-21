@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ViewType } from '../components/Sidebar';
 import { useWealthStore } from '../store/useWealthStore';
 import { motion, AnimatePresence } from 'motion/react';
