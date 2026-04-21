@@ -12,12 +12,26 @@ interface ExpensePlan { category: string; planned: number; }
 export interface StockItem { id: string; name: string; qty: number; unitPrice: number; }
 export interface BusinessLoan { id: string; bankName: string; initialCapital: number; remainingCapital: number; monthlyPayment: number; interestRate: number; }
 
+export type RecurrenceType = 'UNIQUE' | 'BI-WEEKLY' | 'MONTHLY' | 'YEARLY';
+
+export interface ScheduledEvent {
+  id: string;
+  type: 'RENTREÉ' | 'SORTIE';
+  amount: number;
+  label: string;
+  startDate: string; // YYYY-MM-DD
+  recurrence: RecurrenceType;
+}
+
 export interface CalendarEvent {
   id: string;
   type: 'RENTREÉ' | 'SORTIE';
   amount: number;
   label: string;
   dateStr: string; // Format YYYY-MM-DD for easy mapping
+  isVirtual?: boolean;
+  recurrence?: RecurrenceType;
+  originalId?: string;
 }
 
 export interface SimulatedProject {
@@ -70,6 +84,10 @@ interface WealthState {
   addCalendarEvent: (event: CalendarEvent) => void;
   deleteCalendarEvent: (id: string) => void;
   
+  scheduledEvents: ScheduledEvent[];
+  addScheduledEvent: (event: ScheduledEvent) => void;
+  removeScheduledEvent: (id: string) => void;
+  
   simulations: SimulatedProject[];
   addSimulation: (sim: SimulatedProject) => void;
   removeSimulation: (id: string) => void;
@@ -110,6 +128,7 @@ const INITIAL_STATE = {
     loans: []
   },
   calendarEvents: [],
+  scheduledEvents: [],
   simulations: []
 };
 
@@ -288,6 +307,10 @@ export const useWealthStore = create<WealthState>((set) => ({
   calendarEvents: [],
   addCalendarEvent: (event) => set((state) => ({ calendarEvents: [...state.calendarEvents, event] })),
   deleteCalendarEvent: (id) => set((state) => ({ calendarEvents: state.calendarEvents.filter(e => e.id !== id) })),
+
+  scheduledEvents: [],
+  addScheduledEvent: (event) => set((state) => ({ scheduledEvents: [...state.scheduledEvents, event] })),
+  removeScheduledEvent: (id) => set((state) => ({ scheduledEvents: state.scheduledEvents.filter(e => e.id !== id) })),
 
   simulations: [],
   addSimulation: (sim) => set((state) => ({ simulations: [...state.simulations, sim] })),

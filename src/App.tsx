@@ -26,6 +26,7 @@ import BusinessStockView from './views/BusinessStockView';
 import BusinessDettesView from './views/BusinessDettesView';
 import FiscaliteProView from './views/FiscaliteProView';
 import SimulationView from './views/SimulationView';
+import CalendarView from './views/CalendarView';
 import { useWealthStore } from './store/useWealthStore';
 import Logo from './components/Logo';
 
@@ -138,6 +139,8 @@ export default function App() {
         return <BusinessDettesView onNavigate={setCurrentView} />;
       case 'simulations':
         return <SimulationView onNavigate={setCurrentView} />;
+      case 'calendar':
+        return <CalendarView onNavigate={setCurrentView} />;
       default:
         // By default or for investments (if stub)
         return <DashboardView onNavigate={setCurrentView} mode={mode} />;

@@ -1,15 +1,16 @@
-import { LayoutDashboard, ArrowLeftRight, Receipt, MessageSquare, FileScan, Users, Percent, Globe, Settings2, LogOut, Compass } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Receipt, MessageSquare, FileScan, Users, Percent, Globe, Settings2, LogOut, Compass, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import Logo from './Logo';
 import { useWealthStore } from '../store/useWealthStore';
 
-export type ViewType = 'dashboard' | 'cashflow' | 'taxes' | 'community' | 'crypto-detail' | 'immobilier' | 'cash' | 'epargne' | 'bourse' | 'or' | 'factures' | 'rh' | 'fiscalite' | 'business-tresorerie' | 'business-flux' | 'business-stock' | 'business-rh' | 'business-dettes' | 'business-fiscal' | 'simulations';
+export type ViewType = 'dashboard' | 'cashflow' | 'taxes' | 'community' | 'crypto-detail' | 'immobilier' | 'cash' | 'epargne' | 'bourse' | 'or' | 'factures' | 'rh' | 'fiscalite' | 'business-tresorerie' | 'business-flux' | 'business-stock' | 'business-rh' | 'business-dettes' | 'business-fiscal' | 'simulations' | 'calendar';
 
 const particulierItems = [
   { id: 'dashboard' as ViewType, icon: LayoutDashboard, label: 'Dashboard' },
   { id: 'cashflow' as ViewType, icon: ArrowLeftRight, label: 'Cashflow' },
+  { id: 'calendar' as ViewType, icon: Calendar, label: 'Échéancier' },
   { id: 'simulations' as ViewType, icon: Compass, label: 'Horizon' },
   { id: 'taxes' as ViewType, icon: Receipt, label: 'Taxes' },
   { id: 'community' as ViewType, icon: MessageSquare, label: 'Communauté' },
@@ -17,6 +18,7 @@ const particulierItems = [
 
 const businessItems = [
   { id: 'dashboard' as ViewType, icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'calendar' as ViewType, icon: Calendar, label: 'Échéancier' },
   { id: 'factures' as ViewType, icon: FileScan, label: 'Factures' },
   { id: 'rh' as ViewType, icon: Users, label: 'G. RH' },
   { id: 'fiscalite' as ViewType, icon: Percent, label: 'Fisc. Pro' },
